@@ -1,0 +1,38 @@
+set_global_assignment -name FAMILY "Cyclone V"
+set_global_assignment -name DEVICE 5CSXFC6D6F31C6
+set_global_assignment -name TOP_LEVEL_ENTITY RV32IMscMCU
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION 21.1.0
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+set_global_assignment -name NUM_PARALLEL_PROCESSORS 4
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name VHDL_INPUT_VERSION VHDL_2008
+set_global_assignment -name PROJECT_IP_REGENERATION_POLICY NEVER_REGENERATE_IP
+
+set_global_assignment -name VHDL_FILE ../../DUT/RV32IMscMCU/cond_compilation_package.vhd
+set_global_assignment -name VHDL_FILE ../../DUT/RV32IMscMCU/const_package.vhd
+set_global_assignment -name VHDL_FILE ../../DUT/RV32IMscMCU/mcu_memory_map_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../DUT/RV32IMscMCU/aux_package.vhd
+set_global_assignment -name VHDL_FILE ../../DUT/RV32IMscMCU/PLL.vhd
+set_global_assignment -name VHDL_FILE ../../DUT/RV32IMscMCU/Multiplier16.vhd
+set_global_assignment -name VHDL_FILE ../../DUT/RV32IMscMCU/divider_unsigned.vhd
+set_global_assignment -name VHDL_FILE ../../DUT/RV32IMscMCU/divider_accelerator.vhd
+set_global_assignment -name VHDL_FILE ../../DUT/RV32IMscMCU/mcu_interconnect.vhd
+set_global_assignment -name VHDL_FILE ../../DUT/RV32IMscMCU/gpio_peripheral.vhd
+set_global_assignment -name VHDL_FILE ../../DUT/RV32IMscMCU/CONTROL.VHD
+set_global_assignment -name VHDL_FILE ../../DUT/RV32IMscMCU/DMEMORY.VHD
+set_global_assignment -name VHDL_FILE ../../DUT/RV32IMscMCU/EXECUTE.VHD
+set_global_assignment -name VHDL_FILE ../../DUT/RV32IMscMCU/IDECODE.VHD
+set_global_assignment -name VHDL_FILE ../../DUT/RV32IMscMCU/IFETCH.VHD
+set_global_assignment -name VHDL_FILE ../../DUT/RV32IMscMCU/RV32I_CORE.vhd
+set_global_assignment -name VHDL_FILE ../../DUT/RV32IMscMCU/RV32IMscMCU.vhd
+set_global_assignment -name SDC_FILE RV32IMscMCU.sdc
+
+# The instructor-provided DE10-Standard pin note identifies CLOCK_50 as AF14.
+# Remaining board pin assignments are intentionally deferred to the final
+# board-integration stage, when they will be generated/checked as one set.
+set_location_assignment PIN_AF14 -to CLOCK_50
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to CLOCK_50
+
+# SignalTap is mandatory for final validation and will be enabled when the
+# phase-10 .stp file is created.

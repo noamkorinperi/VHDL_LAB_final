@@ -1,0 +1,17 @@
+cond_compilation_package.vhd
+const_package.vhd
+mcu_memory_map_pkg.vhd
+aux_package.vhd
+PLL.vhd
+Multiplier16.vhd
+divider_unsigned.vhd
+divider_accelerator.vhd
+mcu_interconnect.vhd
+gpio_peripheral.vhd
+CONTROL.VHD
+DMEMORY.VHD
+EXECUTE.VHD
+IDECODE.VHD
+IFETCH.VHD
+RV32I_CORE.vhd
+RV32IMscMCU.vhd

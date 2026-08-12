@@ -1,0 +1,59 @@
+library ieee;
+use ieee.std_logic_1164.all;
+
+use work.mcu_memory_map_pkg.all;
+
+entity mcu_interconnect is
+    generic (
+        DTCM_ADDR_WIDTH : positive := 11
+    );
+    port (
+        cpu_addr_i   : in  std_logic_vector(31 downto 0);
+        cpu_wdata_i  : in  std_logic_vector(31 downto 0);
+        cpu_read_i   : in  std_logic;
+        cpu_write_i  : in  std_logic;
+        cpu_rdata_o  : out std_logic_vector(31 downto 0);
+
+        dtcm_addr_o  : out std_logic_vector(DTCM_ADDR_WIDTH-1 downto 0);
+        dtcm_wdata_o : out std_logic_vector(31 downto 0);
+        dtcm_read_o  : out std_logic;
+        dtcm_write_o : out std_logic;
+        dtcm_rdata_i : in  std_logic_vector(31 downto 0);
+
+        mmio_addr_o  : out std_logic_vector(31 downto 0);
+        mmio_wdata_o : out std_logic_vector(31 downto 0);
+        mmio_read_o  : out std_logic;
+        mmio_write_o : out std_logic;
+        mmio_rdata_i : in  std_logic_vector(31 downto 0);
+        mmio_hit_i   : in  std_logic;
+
+        unmapped_o   : out std_logic
+    );
+end entity;
+
+architecture rtl of mcu_interconnect is
+    signal dtcm_selected_w : std_logic;
+    signal mmio_selected_w : std_logic;
+begin
+    dtcm_selected_w <= '1' when is_dtcm_address(cpu_addr_i) else '0';
+    mmio_selected_w <= '1' when is_mmio_address(cpu_addr_i) else '0';
+
+    -- DTCM is word-addressed internally, while the CPU/MMIO bus preserves all
+    -- byte address bits (required by HEX1/3/5 and later byte registers).
+    dtcm_addr_o  <= cpu_addr_i(DTCM_ADDR_WIDTH+1 downto 2);
+    dtcm_wdata_o <= cpu_wdata_i;
+    dtcm_read_o  <= cpu_read_i and dtcm_selected_w;
+    dtcm_write_o <= cpu_write_i and dtcm_selected_w;
+
+    mmio_addr_o  <= cpu_addr_i;
+    mmio_wdata_o <= cpu_wdata_i;
+    mmio_read_o  <= cpu_read_i and mmio_selected_w;
+    mmio_write_o <= cpu_write_i and mmio_selected_w;
+
+    cpu_rdata_o <= dtcm_rdata_i when dtcm_selected_w = '1' else
+                   mmio_rdata_i when mmio_selected_w = '1' and mmio_hit_i = '1' else
+                   (others => '0');
+
+    unmapped_o <= (cpu_read_i or cpu_write_i) and not dtcm_selected_w and
+                  not (mmio_selected_w and mmio_hit_i);
+end architecture;

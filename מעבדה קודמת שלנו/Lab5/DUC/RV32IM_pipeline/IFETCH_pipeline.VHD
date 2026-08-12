@@ -1,0 +1,137 @@
+--============================================================================
+-- Copyright 2026 Hananya Ribo 
+-- Advanced CPU architecture and Hardware Accelerators Lab 361-1-4693 BGU
+-- Top Level Structural Model for Single-Cycle RISC-V Core
+-- IFETCH module provides the PC and the ITCM of the RISC-V core)
+--============================================================================
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.STD_LOGIC_ARITH.ALL;
+USE IEEE.STD_LOGIC_UNSIGNED.ALL;
+LIBRARY altera_mf;
+USE altera_mf.altera_mf_components.all;
+
+
+ENTITY Ifetch IS
+	generic(
+		WORD_GRANULARITY 	: boolean	:= False;
+		DATA_BUS_WIDTH 		: integer	:= 32;
+		PC_WIDTH 			: integer	:= 10;
+		ITCM_ADDR_WIDTH 	: integer	:= 8;
+		WORDS_NUM 			: integer	:= 256
+	);
+	PORT(
+		--Inputs
+		clk_i				: IN 	STD_LOGIC;
+		rst_i 				: IN 	STD_LOGIC;
+		PCWrite_i			: IN 	STD_LOGIC;
+		addr_gen_i 			: IN 	STD_LOGIC_VECTOR(PC_WIDTH-1 DOWNTO 0);
+		Branch_ctrl_i		: IN 	STD_LOGIC;
+		brTaken_i 			: IN 	STD_LOGIC;
+		Jal_ctrl_i			: IN 	STD_LOGIC;
+		Jalr_ctrl_i			: IN 	STD_LOGIC;
+		alu_res_i 			: IN 	STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
+		
+		--Outputs
+		pc_o 				: OUT	STD_LOGIC_VECTOR(PC_WIDTH-1 DOWNTO 0);			-- the current PC that IFETCH sends to the rest of the CPU
+		pc_plus4_o 			: OUT	STD_LOGIC_VECTOR(PC_WIDTH-1 DOWNTO 0);			-- the address of the next normal instruction, also used as return address for jal/jalr
+		instruction_o 		: OUT	STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0)
+	);
+END Ifetch;
+
+
+ARCHITECTURE behavior OF Ifetch IS
+	SIGNAL pc_q				: STD_LOGIC_VECTOR(PC_WIDTH-1 DOWNTO 0);				-- the PC value stored in a register and updated on the clock edge
+	SIGNAL itcm_addr_w		: STD_LOGIC_VECTOR(ITCM_ADDR_WIDTH-1 DOWNTO 0);
+	SIGNAL next_pc_w  		: STD_LOGIC_VECTOR(PC_WIDTH-1 DOWNTO 0);				-- the selected next PC: PC+4, branch target, jump target, or reset value
+	SIGNAL brTaken_w  		: STD_LOGIC;
+	SIGNAL rst_q  			: STD_LOGIC;
+	
+BEGIN
+	--=======================================
+	-- ITCM (ROM) connection (altsyncram is an Intel/Altera ready IP/primitive that comes with Quartus - This is not an entity of ours)
+	--=======================================
+	inst_memory: altsyncram
+	GENERIC MAP (
+		operation_mode			=> "ROM",
+		width_a 				=> DATA_BUS_WIDTH,
+		widthad_a 				=> ITCM_ADDR_WIDTH,
+		numwords_a 				=> WORDS_NUM,
+		lpm_hint 				=> "ENABLE_RUNTIME_MOD = YES,INSTANCE_NAME = ITCM",
+		lpm_type 				=> "altsyncram",
+		outdata_reg_a 			=> "UNREGISTERED",
+		init_file 				=> "C:\Users\ASUS\Desktop\Computers_LAB\Lab5\Material\Benchmark_Apps\test1\RV32IM\man_compiled\bin\M9K-intel\ITCM.hex",
+		intended_device_family	=> "Cyclone"
+	)
+	PORT MAP (
+		clock0    				=> clk_i,
+		address_a				=> itcm_addr_w, 
+		q_a 	   				=> instruction_o 
+	);
+-------------------------------------------------------------------------------------
+-- Synchronous reset helper for ITCM address timing.
+-- The ITCM altsyncram path in this design is timed as a prefetch path: address_a is
+-- driven from next_pc_w, not pc_q. rst_q keeps next_pc_w at 0 for the first active
+-- fetch after reset, preserving the validated instruction/PC timing of the original
+-- pipeline implementation while keeping reset synchronous.
+-------------------------------------------------------------------------------------
+PROCESS (clk_i)
+	BEGIN
+		IF(clk_i'EVENT AND clk_i='1') THEN
+			IF rst_i = '1' THEN
+				rst_q <= '1';
+			ELSE
+				rst_q <= '0';
+			END IF;
+		END IF;
+END PROCESS;
+
+-------------------------------------------------------------------------------------
+-- Next PC selection
+-------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------
+	-- Decision MUX for the next PC value
+	-- Priority: jalr/branch/jal redirect (resolved in MEM) > PCWrite=0 hold (stall) > sequential.
+	-- The stall hold is encoded here (not by gating the PC register), so that the ITCM
+	-- re-reads the same address and the IF instruction is held instead of being skipped.
+	brTaken_w <= 	Branch_ctrl_i AND brTaken_i;
+
+	next_pc_w	<=	(others => '0') 								WHEN	rst_q = '1' 					ELSE
+								alu_res_i(PC_WIDTH-1 DOWNTO 0)		WHEN	Jalr_ctrl_i = '1'				ELSE	-- case of jalr
+								addr_gen_i(PC_WIDTH-1 DOWNTO 0)		WHEN	(brTaken_w = '1' or Jal_ctrl_i = '1') ELSE	-- case of Branch Taken or jal
+								pc_q(PC_WIDTH-1 DOWNTO 0)			WHEN	PCWrite_i = '0'					ELSE	-- stall: hold PC (re-read same instruction)
+								pc_q(PC_WIDTH-1 DOWNTO 0) + 4;												-- case of Branch Not-Taken (sequential)
+-----------------------------------------------------------------------------------
+-- pc register
+-- Synchronous reset. PCWrite=0 (stall) hold is encoded in next_pc_w above,
+-- so a branch/jump redirect still wins even while a stall is asserted.
+-------------------------------------------------------------------------------------
+PROCESS (clk_i)
+	BEGIN
+		IF(clk_i'EVENT  AND clk_i='1') THEN
+			IF rst_i = '1' THEN
+				pc_q(PC_WIDTH-1 DOWNTO 0) <= (OTHERS => '0');
+			ELSE
+				pc_q(PC_WIDTH-1 DOWNTO 0) <= next_pc_w;
+			END IF;
+		END IF;
+END PROCESS;
+-----------------------------------------------------------------------------------	
+	-- ITCM address uses next_pc_w, not pc_q.
+	-- In this altsyncram-based pipeline this is intentional: it preserves the validated
+	-- fetch timing/prefetch behavior. Changing this to pc_q causes the benchmark DTCM
+	-- outputs to diverge from GOLDEN.
+	G1: 
+	if (WORD_GRANULARITY = True) generate 		-- i.e. each WORD has unike address
+		itcm_addr_w <= next_pc_w(PC_WIDTH-1 DOWNTO 2);
+	elsif (WORD_GRANULARITY = False) generate 	-- i.e. each BYTE has unike address
+		itcm_addr_w <= next_pc_w(ITCM_ADDR_WIDTH-1 DOWNTO 0);
+	end generate;
+---------------------------------------------------------------------------------------
+	pc_o 		<= 	pc_q;
+	pc_plus4_o	<= 	pc_q + 4;	-- combinational, aligned with pc_o (= IF_PC + 4)
+---------------------------------------------------------------------------------------
+	
+END behavior;
+
+

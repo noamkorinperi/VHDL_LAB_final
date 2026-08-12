@@ -1,0 +1,20 @@
+# Quartus generated data
+**/db/
+**/incremental_db/
+**/output_files/
+**/*.qws
+**/*.smsg
+
+# ModelSim/Questa generated data
+**/work/
+**/transcript
+**/vsim.wlf
+**/*.wlf
+**/*.log
+**/modelsim.ini
+
+# Editor and OS files
+.vs/
+.vscode/
+Thumbs.db
+desktop.ini
