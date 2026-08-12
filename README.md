@@ -1,7 +1,7 @@
-# RV32IM MCU for DE10-Standard
+# VHDL_LAB_final
 
-FPGA final project implementing an RV32IM single-cycle MCU in VHDL for the
-Terasic DE10-Standard board.
+RV32IM single-cycle MCU implemented in VHDL for the Terasic DE10-Standard
+FPGA board.
 
 Current implementation status: stages 0–3 are prepared. Quartus Analysis &
 Synthesis passes; the supplied ModelSim tests are ready to run.
