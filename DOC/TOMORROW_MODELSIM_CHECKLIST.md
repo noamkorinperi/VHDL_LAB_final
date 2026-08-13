@@ -17,7 +17,9 @@
 - מקום לשמור שבעה צילומי מסך ושבעת קובצי ה-log.
 - אין צורך בכרטיס DE10-Standard במהלך הבדיקות האלה.
 - אין צורך ליצור ModelSim Project גרפי; קובצי ה-`.do` מטפלים בספריית
-  `work`, בקומפילציה, בפתיחת ה-Wave ובהרצה.
+  `work`, בקומפילציה, בפתיחת חלונות Wave ו-List ובהרצה.
+- כל script שומר אוטומטית גם קובץ `*_list.do`, המשחזר את האותות ואת
+  אפשרויות התצוגה של חלון List.
 
 ## 2. כללי עבודה חשובים
 
@@ -30,6 +32,8 @@
 6. בכשל הראשון עוצרים. לא ממשיכים לבדיקה הבאה ולא מריצים מחדש לפני
    ששומרים את ה-log וה-Wave, כי הרצה חוזרת עשויה לדרוס את ה-log.
 7. אין לערוך קובצי DUT, ‏TB, ‏`.do` או `.hex` בזמן יום הבדיקה.
+8. לאחר PASS ודא שחלון List נפתח ושנוצר קובץ ה-`*_list.do` המתאים. אין
+   צורך לבצע `File > Save Format` ידנית.
 
 ## 3. פתיחת סביבת העבודה
 
@@ -233,6 +237,19 @@ extension; כתובת שאינה ממומשת אינה נתפסת בטעות ע�
 - [ ] `stage2_gpio_switch_benchmarks.log`
 - [ ] `stage3_divider_unit.log`
 - [ ] `stage3_divider_integration.log`
+
+בנוסף צריכים להיווצר אוטומטית קובצי שחזור התצוגה של חלון List:
+
+- [ ] `stage0_baseline_list.do`
+- [ ] `stage1_interconnect_list.do`
+- [ ] `stage2_gpio_unit_list.do`
+- [ ] `stage2_gpio_integration_list.do`
+- [ ] `stage2_gpio_switch_benchmarks_list.do`
+- [ ] `stage3_divider_unit_list.do`
+- [ ] `stage3_divider_integration_list.do`
+
+קבצים אלה אינם תוצאות הסימולציה עצמן; הם שומרים את מבנה חלון List. ה-log,
+צילום ה-Wave והודעת ה-PASS נשארים ראיות הבדיקה העיקריות.
 
 ## 7. מה לעשות במקרה של כשל
 

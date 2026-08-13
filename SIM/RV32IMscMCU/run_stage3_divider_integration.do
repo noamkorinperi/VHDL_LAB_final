@@ -23,6 +23,13 @@ add wave sim:/tb_stage3_divider_integration/sysclk sim:/tb_stage3_divider_integr
 add wave -radix hex sim:/tb_stage3_divider_integration/pc sim:/tb_stage3_divider_integration/instruction
 add wave sim:/tb_stage3_divider_integration/div_busy sim:/tb_stage3_divider_integration/div_done sim:/tb_stage3_divider_integration/regwrite
 add wave -radix hex sim:/tb_stage3_divider_integration/r1 sim:/tb_stage3_divider_integration/r2 sim:/tb_stage3_divider_integration/result
+view list
+add list sim:/tb_stage3_divider_integration/sysclk sim:/tb_stage3_divider_integration/divclk sim:/tb_stage3_divider_integration/reset
+add list -radix hex sim:/tb_stage3_divider_integration/pc sim:/tb_stage3_divider_integration/instruction
+add list sim:/tb_stage3_divider_integration/div_busy sim:/tb_stage3_divider_integration/div_done sim:/tb_stage3_divider_integration/regwrite
+add list -radix hex sim:/tb_stage3_divider_integration/r1 sim:/tb_stage3_divider_integration/r2 sim:/tb_stage3_divider_integration/result
 run -all
 wave zoom full
+if {[file exists stage3_divider_integration_list.do]} {file delete -force stage3_divider_integration_list.do}
+write format list stage3_divider_integration_list.do
 transcript file ""

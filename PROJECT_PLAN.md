@@ -1,6 +1,6 @@
 # תוכנית עבודה ומעקב - RV32IM MCU על DE10-Standard
 
-עודכן לאחרונה: 12.08.2026 21:58 IDT - נוסף checklist מפורט ליום בדיקות ModelSim
+עודכן לאחרונה: 13.08.2026 15:08 IDT - תיקוני שלב 2 עברו גם Quartus Analysis & Synthesis
 
 מסמך זה הוא מקור המעקב השוטף של הפרויקט. מעדכנים אותו בכל מעבר שלב, לאחר בדיקה שעברה, וכאשר מתגלה חסם או שינוי בדרישות.
 
@@ -10,11 +10,11 @@
 |---|---|
 | כרטיס יעד | DE10-Standard |
 | ארכיטקטורת חובה | RV32IM single-cycle MCU |
-| זמן עדכון אחרון | 12.08.2026 21:58 IDT |
-| שלב נוכחי | שלבים 2–3 מוכנים לבדיקה; שערי היציאה ממתינים ל-ModelSim |
-| הושלם | bus חיצוני, DTCM/MMIO interconnect, GPIO, PLL 25/50 MHz, Divider ו-CDC, שבע בדיקות אוטומטיות |
-| הפעולה הבאה | להריץ לפי `DOC/TOMORROW_MODELSIM_CHECKLIST.md` את שבע בדיקות ModelSim ולתעד PASS/log/Wave |
-| חסם נוכחי | אין חסם תכנוני; בדיקות ModelSim נדחו לפי בקשת המשתמש |
+| זמן עדכון אחרון | 13.08.2026 15:08 IDT |
+| שלב נוכחי | שלבים 0–2 עברו ModelSim; שלב 3 ממתין לבדיקות Divider |
+| הושלם | baseline, interconnect ו-GPIO כולל test0-test2; תוקנו פענוח LUI ו-load immediate |
+| הפעולה הבאה | להריץ ב-GUI את שתי בדיקות GPIO integration לשמירת Wave/List, ואז את שתי בדיקות שלב 3 |
+| חסם נוכחי | אין; תיקוני האינטגרציה עברו רגרסיה אוטומטית |
 | Quartus | Analysis & Synthesis של התכנון עד שלב 3 עבר עם 0 errors ו-13 warnings |
 | בונוסים | Pipeline ו-UART מוקפאים עד השלמת כל דרישות החובה |
 
@@ -34,9 +34,9 @@
 
 | שלב | חבילת עבודה | תוצר מרכזי | מצב |
 |---:|---|---|---|
-| 0 | סביבת עבודה ו-baseline | ליבת RV32IM הקיימת עוברת ModelSim | `[! | 12.08.2026 20:44 IDT]` - אימות נדחה |
+| 0 | סביבת עבודה ו-baseline | ליבת RV32IM הקיימת עוברת ModelSim | `[x | 13.08.2026 14:00 IDT]` |
 | 1 | ארכיטקטורת MCU | Top-Level, מפת כתובות וממשקי bus מוגדרים | `[x | 12.08.2026 20:44 IDT]` |
-| 2 | GPIO ממופה זיכרון | LEDs, HEX ו-switches עובדים ב-ModelSim | `[~ | 12.08.2026 21:25 IDT]` - מוכן לבדיקה |
+| 2 | GPIO ממופה זיכרון | LEDs, HEX ו-switches עובדים ב-ModelSim | `[x | 13.08.2026 15:04 IDT]` |
 | 3 | Divider Accelerator | `DIV/REM` וה-handshake עוברים בדיקות | `[~ | 12.08.2026 21:25 IDT]` - מוכן לבדיקה |
 | 4 | Basic Timer | counter, compare, PWM ו-capture עובדים | `[ ]` |
 | 5 | Pushbuttons | KEY1-KEY3 מסונכרנים, עוברים debounce ומייצרים אירוע יחיד | `[ ]` |
@@ -51,6 +51,44 @@
 ---
 
 ## יומן ביצוע ושינויים בפועל
+
+### 13.08.2026 15:08 IDT - סינתזה חוזרת לאחר תיקוני ה-CPU
+
+- Quartus Prime Lite 21.1 Analysis & Synthesis עבר לאחר תיקוני LUI/load.
+- תוצאה: 0 errors ו-13 warnings; לא נוספה אזהרה חדשה שחוסמת את התכנון.
+- נשמר אותו פרופיל חומרה צפוי: PLL אחד, 4 DSP ו-64 מקטעי RAM.
+
+### 13.08.2026 15:04 IDT - תיקון פענוח immediate וסגירת שלב 2
+
+- בדיקת `GPIO/test0` נכשלה תחילה משום שהמעבד יצר `0x0000/4/5/...` במקום `0x2000/4/5/...`.
+- נמצא שקבוע U-type מקורי שימש גם כמסכה וגם כ-opcode מדויק; `LUI` קיבל immediate אפס.
+- הוגדרו `AUIPC_OPC` ו-`LUI_OPC` בנפרד והפענוח עודכן בשני המקומות.
+- בדיקת `test1/test2` חשפה בנוסף ש-load לא קיבל I-immediate; נוסף `LOAD_OPC` לפענוח.
+- דגימת ה-bus בשני integration TBs הותאמה לקצה שבו טרנזקציית GPIO מתבצעת.
+- רגרסיית שלב 0 עברה ב-6222 ns, ‏GPIO/test0 עבר ב-2462 ns ו-test1/test2 עברו ב-2342 ns.
+- נוסף `DOC/CPU_IMMEDIATE_DECODE_FIX_2026-08-13.md` עם ניתוח מלא וראיות.
+
+### 13.08.2026 14:18 IDT - GPIO unit test עבר
+
+- התקבלה ההודעה `STAGE 2 GPIO UNIT PASS` בזמן סימולציה 223 ns.
+- נשמרו Wave, ‏List וצילום מסך בתיקיית הראיות של שלב 2.
+
+### 13.08.2026 14:11 IDT - בדיקת interconnect עברה
+
+- התקבלה ההודעה `STAGE 1 INTERCONNECT PASS` בזמן סימולציה 5 ns.
+- נשמרו Wave, ‏List וצילום מסך בתיקיית הראיות של שלב 1.
+
+### 13.08.2026 14:05 IDT - שמירת List אוטומטית בבדיקות ModelSim
+
+- כל שבעת קובצי ה-`.do` עודכנו כך שהאותות של Wave מתווספים גם לחלון List.
+- כל הרצה שומרת אוטומטית קובץ `*_list.do` באמצעות `write format list`.
+- מסמך הבדיקות עודכן עם רשימת שבעת קובצי ה-List הצפויים.
+
+### 13.08.2026 14:00 IDT - שלב 0 עבר ב-ModelSim
+
+- התקבלה ההודעה `STAGE 0 PASS: RV32I/MUL baseline and DTCM regression` בזמן סימולציה 6222 ns.
+- נשמרו `stage0_baseline.log`, צילום Wave וקובץ Wave בתיקיית `screenshots/stage 0`.
+- אזהרות arithmetic operand מסוג U/X הופיעו רק בזמן 0 ps ולא מנעו PASS.
 
 ### 12.08.2026 21:58 IDT - הוכן מסמך העבודה למחר
 

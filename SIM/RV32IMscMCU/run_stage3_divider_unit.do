@@ -11,6 +11,13 @@ add wave sim:/tb_stage3_divider_unit/sysclk sim:/tb_stage3_divider_unit/divclk s
 add wave sim:/tb_stage3_divider_unit/start sim:/tb_stage3_divider_unit/busy sim:/tb_stage3_divider_unit/done
 add wave -radix hex sim:/tb_stage3_divider_unit/operation sim:/tb_stage3_divider_unit/dividend
 add wave -radix hex sim:/tb_stage3_divider_unit/divisor sim:/tb_stage3_divider_unit/result
+view list
+add list sim:/tb_stage3_divider_unit/sysclk sim:/tb_stage3_divider_unit/divclk sim:/tb_stage3_divider_unit/reset
+add list sim:/tb_stage3_divider_unit/start sim:/tb_stage3_divider_unit/busy sim:/tb_stage3_divider_unit/done
+add list -radix hex sim:/tb_stage3_divider_unit/operation sim:/tb_stage3_divider_unit/dividend
+add list -radix hex sim:/tb_stage3_divider_unit/divisor sim:/tb_stage3_divider_unit/result
 run -all
 wave zoom full
+if {[file exists stage3_divider_unit_list.do]} {file delete -force stage3_divider_unit_list.do}
+write format list stage3_divider_unit_list.do
 transcript file ""

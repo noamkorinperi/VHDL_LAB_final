@@ -25,6 +25,13 @@ add wave -divider Core
 add wave -radix hex sim:/tb_stage0_baseline/pc sim:/tb_stage0_baseline/instruction
 add wave -radix hex sim:/tb_stage0_baseline/r1 sim:/tb_stage0_baseline/r2 sim:/tb_stage0_baseline/alu
 add wave sim:/tb_stage0_baseline/regwrite sim:/tb_stage0_baseline/memwrite
+view list
+add list sim:/tb_stage0_baseline/sysclk sim:/tb_stage0_baseline/divclk sim:/tb_stage0_baseline/reset
+add list -radix hex sim:/tb_stage0_baseline/pc sim:/tb_stage0_baseline/instruction
+add list -radix hex sim:/tb_stage0_baseline/r1 sim:/tb_stage0_baseline/r2 sim:/tb_stage0_baseline/alu
+add list sim:/tb_stage0_baseline/regwrite sim:/tb_stage0_baseline/memwrite
 run -all
 wave zoom full
+if {[file exists stage0_baseline_list.do]} {file delete -force stage0_baseline_list.do}
+write format list stage0_baseline_list.do
 transcript file ""

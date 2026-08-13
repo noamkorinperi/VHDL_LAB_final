@@ -14,6 +14,7 @@ Synthesis passes; the supplied ModelSim tests are ready to run.
 - `SIM/RV32IMscMCU` — ModelSim scripts and memory images.
 - `Quartus/RV32IMscMCU` — Quartus project for Cyclone V.
 - `DOC/MODELSIM_TESTS_STAGE0_TO_STAGE3.md` — test instructions.
+- `DOC/CPU_IMMEDIATE_DECODE_FIX_2026-08-13.md` — documented LUI/load decode fix.
 - `Benchmark apps` — instructor-provided application benchmarks.
 
 Generated Quartus and ModelSim artifacts are intentionally excluded through

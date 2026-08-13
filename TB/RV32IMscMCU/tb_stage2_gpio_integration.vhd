@@ -34,7 +34,10 @@ begin
     begin
         reset <= '1'; wait for 4*SYS_PERIOD; reset <= '0';
         for cycle in 0 to 500 loop
-            wait until rising_edge(sysclk); wait for 2 ns;
+            -- Sample the transaction that is committed on this rising edge.
+            -- Waiting after the edge observes the following instruction because
+            -- this is a single-cycle combinational bus.
+            wait until rising_edge(sysclk);
             if bus_write = '1' then
                 if bus_addr = C_PORT_LEDR_ADDR then led_writes := led_writes + 1; end if;
                 if bus_addr = C_PORT_HEX0_ADDR or bus_addr = C_PORT_HEX1_ADDR or
@@ -45,6 +48,7 @@ begin
             end if;
             exit when led_writes >= 2 and hex_writes >= 12;
         end loop;
+        wait for 2 ns; -- allow GPIO output registers to update after the edge
         assert led_writes >= 2 report "Stage 2 integration: GPIO benchmark did not write LEDR twice" severity failure;
         assert hex_writes >= 12 report "Stage 2 integration: expected two writes to all HEX ports" severity failure;
         assert ledr = x"01" report "Stage 2 integration: second loop should leave LEDR=1" severity failure;

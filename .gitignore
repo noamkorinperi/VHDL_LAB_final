@@ -10,8 +10,10 @@
 **/transcript
 **/vsim.wlf
 **/*.wlf
+**/wlf*
 **/*.log
 **/modelsim.ini
+**/*_list.do
 
 # Editor and OS files
 .vs/

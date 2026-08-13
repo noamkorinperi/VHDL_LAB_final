@@ -27,6 +27,17 @@ add wave -radix hex sim:/tb_stage2_gpio_switch_benchmarks/ledr1
 add wave -radix hex sim:/tb_stage2_gpio_switch_benchmarks/addr2 sim:/tb_stage2_gpio_switch_benchmarks/data2
 add wave sim:/tb_stage2_gpio_switch_benchmarks/write2
 add wave -radix hex sim:/tb_stage2_gpio_switch_benchmarks/ledr2
+view list
+add list sim:/tb_stage2_gpio_switch_benchmarks/sysclk sim:/tb_stage2_gpio_switch_benchmarks/reset
+add list -radix hex sim:/tb_stage2_gpio_switch_benchmarks/switches
+add list -radix hex sim:/tb_stage2_gpio_switch_benchmarks/addr1 sim:/tb_stage2_gpio_switch_benchmarks/data1
+add list sim:/tb_stage2_gpio_switch_benchmarks/write1
+add list -radix hex sim:/tb_stage2_gpio_switch_benchmarks/ledr1
+add list -radix hex sim:/tb_stage2_gpio_switch_benchmarks/addr2 sim:/tb_stage2_gpio_switch_benchmarks/data2
+add list sim:/tb_stage2_gpio_switch_benchmarks/write2
+add list -radix hex sim:/tb_stage2_gpio_switch_benchmarks/ledr2
 run -all
 wave zoom full
+if {[file exists stage2_gpio_switch_benchmarks_list.do]} {file delete -force stage2_gpio_switch_benchmarks_list.do}
+write format list stage2_gpio_switch_benchmarks_list.do
 transcript file ""

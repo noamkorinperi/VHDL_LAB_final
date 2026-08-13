@@ -67,7 +67,7 @@ BEGIN
 	Itype_w		<=  '1'	WHEN	(opc_w = ITYPE_OPC) or (ld_w = '1') or (jalr_w = '1') ELSE '0';
 	Stype_w 	<=  '1'	WHEN	opc_w = STYPE_OPC  ELSE '0';
 	SBtype_w 	<=  '1'	WHEN	opc_w = SBTYPE_OPC ELSE '0';
-	Utype_w 	<=  '1'	WHEN	((opc_w and UTYPE_OPC) = UTYPE_OPC)  ELSE '0';
+	Utype_w 	<=  '1'	WHEN	(opc_w = AUIPC_OPC) or (opc_w = LUI_OPC)  ELSE '0';
 	UJtype_w 	<=  '1'	WHEN	opc_w = UJTYPE_OPC ELSE '0';
 
 	lb_w		<=	'1'	WHEN	(instruction_i and INST_LB_MASK) = INST_LB				ELSE 	'0';	--lb		
@@ -204,4 +204,3 @@ BEGIN
 	
 
 END behavior;
-

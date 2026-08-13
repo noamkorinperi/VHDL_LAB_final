@@ -26,6 +26,16 @@ add wave -radix hex sim:/tb_stage2_gpio_integration/ledr
 add wave -radix hex sim:/tb_stage2_gpio_integration/dut/hex0_o sim:/tb_stage2_gpio_integration/dut/hex1_o
 add wave -radix hex sim:/tb_stage2_gpio_integration/dut/hex2_o sim:/tb_stage2_gpio_integration/dut/hex3_o
 add wave -radix hex sim:/tb_stage2_gpio_integration/dut/hex4_o sim:/tb_stage2_gpio_integration/dut/hex5_o
+view list
+add list sim:/tb_stage2_gpio_integration/sysclk sim:/tb_stage2_gpio_integration/reset
+add list -radix hex sim:/tb_stage2_gpio_integration/bus_addr sim:/tb_stage2_gpio_integration/bus_wdata
+add list sim:/tb_stage2_gpio_integration/bus_write
+add list -radix hex sim:/tb_stage2_gpio_integration/ledr
+add list -radix hex sim:/tb_stage2_gpio_integration/dut/hex0_o sim:/tb_stage2_gpio_integration/dut/hex1_o
+add list -radix hex sim:/tb_stage2_gpio_integration/dut/hex2_o sim:/tb_stage2_gpio_integration/dut/hex3_o
+add list -radix hex sim:/tb_stage2_gpio_integration/dut/hex4_o sim:/tb_stage2_gpio_integration/dut/hex5_o
 run -all
 wave zoom full
+if {[file exists stage2_gpio_integration_list.do]} {file delete -force stage2_gpio_integration_list.do}
+write format list stage2_gpio_integration_list.do
 transcript file ""

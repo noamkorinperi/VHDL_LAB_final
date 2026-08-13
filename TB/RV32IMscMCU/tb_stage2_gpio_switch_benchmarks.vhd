@@ -56,7 +56,9 @@ begin
         -- SW0 requests increment+print in both supplied benchmarks.
         switches <= x"01";
         for cycle in 0 to 1000 loop
-            wait until rising_edge(sysclk); wait for 2 ns;
+            -- Sample the bus values that the GPIO registers consume on this
+            -- edge.  A post-edge delay would observe the next instruction.
+            wait until rising_edge(sysclk);
             if write1 = '1' then
                 if addr1 = C_PORT_LEDR_ADDR and data1(7 downto 0) = x"01" then
                     test1_led := test1_led + 1;
@@ -77,6 +79,7 @@ begin
             end if;
             exit when test1_led > 0 and test1_hex >= 6 and test2_led > 0 and test2_hex >= 6;
         end loop;
+        wait for 2 ns; -- allow the committed LEDR writes to become observable
         assert test1_led > 0 and test1_hex >= 6 and ledr1 = x"01"
             report "Stage 2: GPIO/test1 did not react correctly to SW0" severity failure;
         assert test2_led > 0 and test2_hex >= 6 and ledr2 = x"01"

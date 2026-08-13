@@ -113,11 +113,11 @@ BEGIN
 			-- U-type immediates are shifted left by 12 bits, as required by lui/auipc format.
 	--==============================================================================
 	with	opc_w select
-				SignExt_o 		<=	SignExt_Iimm_w														when ITYPE_OPC,
+				SignExt_o 		<=	SignExt_Iimm_w														when ITYPE_OPC | LOAD_OPC,
 									SignExt_Iimm_w														when INST_JALR(6 DOWNTO 0),
 									SignExt_Simm_w														when STYPE_OPC,
 									SignExt_SBimm_w 													when SBTYPE_OPC,
-									SignExt_Uimm_w(19 DOWNTO 0) & ZEROS_IMM12							when UTYPE_OPC,
+									SignExt_Uimm_w(19 DOWNTO 0) & ZEROS_IMM12							when AUIPC_OPC | LUI_OPC,
 									SignExt_UJimm_w														when UJTYPE_OPC,
 									(others => '0')														when others;
 	--==============================================================================
@@ -140,8 +140,6 @@ BEGIN
 	end process;
 
 END behavior;
-
-
 
 
 
