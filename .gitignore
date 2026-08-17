@@ -14,6 +14,7 @@
 **/*.log
 **/modelsim.ini
 **/*_list.do
+!SIM/RV32IMscMCU/screenshots/**/*_list.do
 
 # Editor and OS files
 .vs/
