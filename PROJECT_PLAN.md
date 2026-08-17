@@ -1,6 +1,6 @@
 # תוכנית עבודה ומעקב - RV32IM MCU על DE10-Standard
 
-עודכן לאחרונה: 17.08.2026 21:44 IDT - אות ההמתנה למחלק קיבל שמות divider_hold מפורשים
+עודכן לאחרונה: 17.08.2026 21:48 IDT - שלב 3 הושלם ונבדק ב-ModelSim GUI
 
 מסמך זה הוא מקור המעקב השוטף של הפרויקט. מעדכנים אותו בכל מעבר שלב, לאחר בדיקה שעברה, וכאשר מתגלה חסם או שינוי בדרישות.
 
@@ -10,12 +10,12 @@
 |---|---|
 | כרטיס יעד | DE10-Standard |
 | ארכיטקטורת חובה | RV32IM single-cycle MCU |
-| זמן עדכון אחרון | 17.08.2026 21:44 IDT |
-| שלב נוכחי | שלבים 0–2 עברו ותועדו; שתי בדיקות שלב 3 עברו אוטומטית, ונשאר לשמור ראיית GUI לאינטגרציה |
-| הושלם | baseline, interconnect ו-GPIO כולל test0-test2; Divider unit ו-CPU/Divider integration עברו |
-| הפעולה הבאה | להריץ ב-GUI את בדיקת CPU/Divider integration המתוקנת ולשמור צילום, Wave ו-List |
+| זמן עדכון אחרון | 17.08.2026 21:48 IDT |
+| שלב נוכחי | שלבים 0–3 הושלמו, עברו ModelSim ותועדו; השלב הבא הוא מימוש משולב של שלבים 4–5 |
+| הושלם | baseline, ארכיטקטורה, GPIO ו-Divider Accelerator כולל unit/integration וראיות GUI |
+| הפעולה הבאה | לתכנן ולממש Basic Timer, PWM, Input Capture ו-Pushbuttons, ואז להכין להם בדיקות ModelSim נפרדות |
 | חסם נוכחי | אין; תיקוני האינטגרציה עברו רגרסיה אוטומטית |
-| Quartus | Analysis & Synthesis לאחר תיקון ה-stall עבר עם 0 errors ו-13 warnings |
+| Quartus | Analysis & Synthesis לאחר תיקון ה-divider hold עבר עם 0 errors ו-13 warnings |
 | בונוסים | Pipeline ו-UART מוקפאים עד השלמת כל דרישות החובה |
 
 ### מקרא מצבים וחותמות זמן
@@ -37,7 +37,7 @@
 | 0 | סביבת עבודה ו-baseline | ליבת RV32IM הקיימת עוברת ModelSim | `[x | 13.08.2026 14:00 IDT]` |
 | 1 | ארכיטקטורת MCU | Top-Level, מפת כתובות וממשקי bus מוגדרים | `[x | 12.08.2026 20:44 IDT]` |
 | 2 | GPIO ממופה זיכרון | LEDs, HEX ו-switches עובדים ב-ModelSim | `[x | 13.08.2026 15:04 IDT]` |
-| 3 | Divider Accelerator | `DIV/REM` וה-handshake עוברים בדיקות | `[~ | 17.08.2026 21:34 IDT]` - שתי הבדיקות עברו; ראיית GUI לאינטגרציה ממתינה |
+| 3 | Divider Accelerator | `DIV/REM` וה-handshake עוברים בדיקות | `[x | 17.08.2026 21:48 IDT]` |
 | 4 | Basic Timer | counter, compare, PWM ו-capture עובדים | `[ ]` |
 | 5 | Pushbuttons | KEY1-KEY3 מסונכרנים, עוברים debounce ומייצרים אירוע יחיד | `[ ]` |
 | 5.5 | בדיקת חומרה מוקדמת | KEY1-KEY3 ו-PWM מודגמים פיזית על DE10-Standard | `[ ]` |
@@ -51,6 +51,13 @@
 ---
 
 ## יומן ביצוע ושינויים בפועל
+
+### 17.08.2026 21:48 IDT - סגירת שלב 3
+
+- בדיקת `STAGE 3 CPU/DIVIDER INTEGRATION PASS` עברה גם בהרצת ModelSim GUI של המשתמש.
+- נשמרו צילום מסך, Wave ו-List עבור בדיקת האינטגרציה בתיקיית הראיות של שלב 3.
+- יחד עם ראיות ה-Divider unit, כל שבע בדיקות שלבים 0–3 עברו ותועדו.
+- שלב 3 מסומן כעת הושלם; הפעולה הבאה היא מימוש משולב של שלבים 4 ו-5 ולאחריו בדיקות ModelSim ובדיקת חומרה 5.5.
 
 ### 17.08.2026 21:44 IDT - שינוי שמות אות ההחזקה של המחלק
 

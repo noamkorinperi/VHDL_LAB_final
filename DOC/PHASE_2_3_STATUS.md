@@ -28,13 +28,13 @@
   write-enable רק בפולס `done`.
 - ה-top מפיק sysclk של 25 MHz בעזרת PLL ומפעיל את המחלק מ-CLOCK_50 של 50 MHz.
 
-## מצב אימות
+## מצב אימות — הושלם 17.08.2026 21:48 IDT
 
 - Quartus Analysis & Synthesis עבר בהצלחה עם 0 errors ו-13 warnings.
 - תוצאת synthesis: 1,666 registers, ‏131,072 block-memory bits, ‏4 DSP blocks
   ו-PLL אחד. לא נמצאה אזהרת latch, multiple drivers או combinational loop.
-- שבע בדיקות ModelSim לשלבים 0–3 מוכנות אך טרם הורצו, לפי בקשת המשתמש. הוראות מפורטות
-  נמצאות ב-`DOC/MODELSIM_TESTS_STAGE0_TO_STAGE3.md`.
+- כל שבע בדיקות ModelSim לשלבים 0–3 עברו, כולל Divider unit ואינטגרציית
+  CPU/Divider. צילומי מסך וקובצי Wave/List נשמרו בתיקיות הראיות.
+- הוראות הבדיקות המפורטות נמצאות ב-`DOC/MODELSIM_TESTS_STAGE0_TO_STAGE3.md`.
 
-שלבים 2 ו-3 נחשבים **מוכנים לבדיקה**, ולא **מאומתים פונקציונלית**, עד שכל
-ה-scripts הרלוונטיים מסיימים בהודעת PASS.
+שלבים 2 ו-3 נחשבים כעת **מאומתים פונקציונלית** וסגורים.
