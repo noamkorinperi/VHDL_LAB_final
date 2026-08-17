@@ -2,6 +2,7 @@ transcript file stage3_divider_unit.log
 if {[file exists work]} {vdel -lib work -all}
 vlib work
 vmap work work
+vcom -2008 ../../DUT/RV32IMscMCU/cond_compilation_package.vhd
 vcom -2008 ../../DUT/RV32IMscMCU/const_package.vhd
 vcom -2008 ../../DUT/RV32IMscMCU/divider_unsigned.vhd
 vcom -2008 ../../DUT/RV32IMscMCU/divider_accelerator.vhd

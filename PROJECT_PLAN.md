@@ -1,6 +1,6 @@
 # תוכנית עבודה ומעקב - RV32IM MCU על DE10-Standard
 
-עודכן לאחרונה: 13.08.2026 15:08 IDT - תיקוני שלב 2 עברו גם Quartus Analysis & Synthesis
+עודכן לאחרונה: 17.08.2026 21:21 IDT - בדיקת יחידת ה-Divider עברה לאחר תיקון סדר הקומפילציה
 
 מסמך זה הוא מקור המעקב השוטף של הפרויקט. מעדכנים אותו בכל מעבר שלב, לאחר בדיקה שעברה, וכאשר מתגלה חסם או שינוי בדרישות.
 
@@ -10,10 +10,10 @@
 |---|---|
 | כרטיס יעד | DE10-Standard |
 | ארכיטקטורת חובה | RV32IM single-cycle MCU |
-| זמן עדכון אחרון | 13.08.2026 15:08 IDT |
-| שלב נוכחי | שלבים 0–2 עברו ModelSim; שלב 3 ממתין לבדיקות Divider |
-| הושלם | baseline, interconnect ו-GPIO כולל test0-test2; תוקנו פענוח LUI ו-load immediate |
-| הפעולה הבאה | להריץ ב-GUI את שתי בדיקות GPIO integration לשמירת Wave/List, ואז את שתי בדיקות שלב 3 |
+| זמן עדכון אחרון | 17.08.2026 21:21 IDT |
+| שלב נוכחי | שלבים 0–2 עברו ותועדו; בדיקת היחידה של שלב 3 עברה, בדיקת האינטגרציה ממתינה להרצה |
+| הושלם | baseline, interconnect ו-GPIO כולל test0-test2; Divider unit עבר ב-5661 ns |
+| הפעולה הבאה | להריץ שוב ב-GUI את בדיקת Divider unit לשמירת Wave/List, ואז להריץ את בדיקת CPU/Divider integration |
 | חסם נוכחי | אין; תיקוני האינטגרציה עברו רגרסיה אוטומטית |
 | Quartus | Analysis & Synthesis של התכנון עד שלב 3 עבר עם 0 errors ו-13 warnings |
 | בונוסים | Pipeline ו-UART מוקפאים עד השלמת כל דרישות החובה |
@@ -37,7 +37,7 @@
 | 0 | סביבת עבודה ו-baseline | ליבת RV32IM הקיימת עוברת ModelSim | `[x | 13.08.2026 14:00 IDT]` |
 | 1 | ארכיטקטורת MCU | Top-Level, מפת כתובות וממשקי bus מוגדרים | `[x | 12.08.2026 20:44 IDT]` |
 | 2 | GPIO ממופה זיכרון | LEDs, HEX ו-switches עובדים ב-ModelSim | `[x | 13.08.2026 15:04 IDT]` |
-| 3 | Divider Accelerator | `DIV/REM` וה-handshake עוברים בדיקות | `[~ | 12.08.2026 21:25 IDT]` - מוכן לבדיקה |
+| 3 | Divider Accelerator | `DIV/REM` וה-handshake עוברים בדיקות | `[~ | 17.08.2026 21:20 IDT]` - unit עבר; integration ממתין לבדיקה |
 | 4 | Basic Timer | counter, compare, PWM ו-capture עובדים | `[ ]` |
 | 5 | Pushbuttons | KEY1-KEY3 מסונכרנים, עוברים debounce ומייצרים אירוע יחיד | `[ ]` |
 | 5.5 | בדיקת חומרה מוקדמת | KEY1-KEY3 ו-PWM מודגמים פיזית על DE10-Standard | `[ ]` |
@@ -51,6 +51,19 @@
 ---
 
 ## יומן ביצוע ושינויים בפועל
+
+### 17.08.2026 21:21 IDT - תיקון והרצת Divider unit
+
+- בהרצה הראשונה `const_package.vhd` לא התקמפל משום שהסקריפט לא קימפל קודם את `cond_compilation_package.vhd`.
+- סדר הקומפילציה ב-`run_stage3_divider_unit.do` תוקן בהתאם ל-`COMPILE_ORDER.txt` ולסקריפט האינטגרציה.
+- הרצת console מלאה עברה עם 0 errors ו-0 warnings והתקבלה ההודעה `STAGE 3 DIVIDER UNIT PASS` ב-5661 ns.
+- עדיין נדרשת הרצה חוזרת ב-GUI לשמירת Wave/List, ולאחריה בדיקת CPU/Divider integration.
+
+### 17.08.2026 21:19 IDT - הושלם תיעוד GUI של שלב 2
+
+- נשמרו צילום מסך, Wave ו-List עבור `GPIO/test0` integration.
+- נשמרו צילום מסך, Wave ו-List עבור בדיקות `GPIO/test1` ו-`GPIO/test2` עם switches.
+- בכך הושלם גם תיעוד הראיות של שלב 2, מעבר להרצות האוטומטיות שכבר עברו.
 
 ### 13.08.2026 15:08 IDT - סינתזה חוזרת לאחר תיקוני ה-CPU
 
