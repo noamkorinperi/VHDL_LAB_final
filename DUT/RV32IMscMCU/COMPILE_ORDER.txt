@@ -8,6 +8,9 @@ divider_unsigned.vhd
 divider_accelerator.vhd
 mcu_interconnect.vhd
 gpio_peripheral.vhd
+basic_timer.vhd
+pushbutton_unit.vhd
+mcu_peripherals.vhd
 CONTROL.VHD
 DMEMORY.VHD
 EXECUTE.VHD

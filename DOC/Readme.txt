@@ -2,18 +2,20 @@ RV32IMscMCU working tree
 ========================
 
 DUT/RV32IMscMCU
-  Synthesizable VHDL.  The lab sources were copied here so the originals remain
-  unchanged.  mcu_memory_map_pkg.vhd and RV32IMscMCU.vhd were added in phase 1.
+  Synthesizable VHDL. The lab sources were copied here so the originals remain
+  unchanged. The active tree now contains the interconnect, GPIO, divider,
+  Basic Timer, pushbutton conditioner and structural peripheral mux.
 
 TB/RV32IMscMCU
-  Testbenches.  tb_RV32IM_baseline.vhd is preserved for the future ModelSim day.
+  Self-checking unit and integration testbenches for stages 0-5.
 
 SIM/RV32IMscMCU
-  ModelSim inputs and, later, the project .do file.  ITCM.hex and DTCM.hex are
-  local working copies of the manual RV32IM test1 benchmark.
+  Independent ModelSim .do scripts, memory images and saved GUI evidence.
+  Each script builds its own dependency set and prepares both Wave and List.
 
 DOC
-  Architecture, status, verification evidence and final documentation.
+  Architecture, timestamped status, ModelSim instructions, defect analyses and
+  final documentation material.
 
 Quartus/RV32IMscMCU
   Quartus project scaffold for the DE10-Standard and local synthesis memory

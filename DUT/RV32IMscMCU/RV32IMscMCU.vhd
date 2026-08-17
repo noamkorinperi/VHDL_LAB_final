@@ -31,10 +31,15 @@ architecture structural of RV32IMscMCU is
     signal mmio_addr_w, mmio_wdata_w, mmio_rdata_w : std_logic_vector(31 downto 0);
     signal mmio_read_w, mmio_write_w, mmio_hit_w, unmapped_w : std_logic;
     signal gpio_ledr_w : std_logic_vector(7 downto 0);
+    signal pwm_w, timer_event_w : std_logic;
+    signal key_event_w, button_state_w : std_logic_vector(2 downto 0);
+    signal timer_count_w, timer_capture_w : std_logic_vector(31 downto 0);
 
     attribute keep : boolean;
     attribute keep of cpu_addr_w, cpu_wdata_w, cpu_rdata_w : signal is true;
     attribute keep of cpu_read_w, cpu_write_w, unmapped_w : signal is true;
+    attribute keep of timer_event_w, key_event_w : signal is true;
+    attribute keep of timer_count_w, timer_capture_w : signal is true;
 begin
     -- The core runs at 25 MHz and the iterative divider at the board's 50 MHz
     -- oscillator.  The CDC handshake in divider_accelerator separates domains.
@@ -129,7 +134,7 @@ begin
             dtcm_data_rd_o  => dtcm_rdata_w
         );
 
-    gpio : entity work.gpio_peripheral
+    peripherals : entity work.mcu_peripherals
         port map (
             clk_i        => sysclk_w,
             reset_i      => reset_w,
@@ -140,15 +145,28 @@ begin
             read_data_o  => mmio_rdata_w,
             hit_o        => mmio_hit_w,
             switches_i   => SW(7 downto 0),
+            keys_n_i     => KEY(3 downto 1),
+            capin1_i     => SW(8),
+            capin2_i     => SW(9),
             ledr_o       => gpio_ledr_w,
             hex0_o       => HEX0,
             hex1_o       => HEX1,
             hex2_o       => HEX2,
             hex3_o       => HEX3,
             hex4_o       => HEX4,
-            hex5_o       => HEX5
+            hex5_o       => HEX5,
+            pwm_o         => pwm_w,
+            timer_event_o => timer_event_w,
+            key_event_o   => key_event_w,
+            button_state_o => button_state_w,
+            timer_count_o   => timer_count_w,
+            timer_capture_o => timer_capture_w
         );
 
     LEDR(7 downto 0) <= gpio_ledr_w;
-    LEDR(9 downto 8) <= (others => '0');
+    -- Stage-5.5 board observability: PWM is visible on LEDR8 and LEDR9
+    -- lights while any debounced pushbutton is held. Interrupt events remain
+    -- internal until the stage-6 interrupt controller consumes them.
+    LEDR(8) <= pwm_w;
+    LEDR(9) <= button_state_w(0) or button_state_w(1) or button_state_w(2);
 end architecture;

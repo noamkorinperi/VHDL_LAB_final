@@ -90,15 +90,22 @@ begin
             dtcm_data_rd_o => dtcm_rdata_w
         );
 
-    gpio : entity work.gpio_peripheral
+    peripherals : entity work.mcu_peripherals
+        generic map (
+            PB_DEBOUNCE_CYCLES => 2
+        )
         port map (
             clk_i => sys_clk_i, reset_i => reset_i,
             address_i => mmio_addr_w, write_data_i => mmio_wdata_w,
             read_i => mmio_read_w, write_i => mmio_write_w,
             read_data_o => mmio_rdata_w, hit_o => mmio_hit_w,
             switches_i => switches_i, ledr_o => ledr_o,
+            keys_n_i => (others => '1'), capin1_i => '0', capin2_i => '0',
             hex0_o => hex0_o, hex1_o => hex1_o, hex2_o => hex2_o,
-            hex3_o => hex3_o, hex4_o => hex4_o, hex5_o => hex5_o
+            hex3_o => hex3_o, hex4_o => hex4_o, hex5_o => hex5_o,
+            pwm_o => open, timer_event_o => open, key_event_o => open,
+            button_state_o => open, timer_count_o => open,
+            timer_capture_o => open
         );
 
     bus_addr_o  <= cpu_addr_w;

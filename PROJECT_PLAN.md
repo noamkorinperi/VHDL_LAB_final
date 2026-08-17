@@ -1,6 +1,6 @@
 # תוכנית עבודה ומעקב - RV32IM MCU על DE10-Standard
 
-עודכן לאחרונה: 17.08.2026 21:48 IDT - שלב 3 הושלם ונבדק ב-ModelSim GUI
+עודכן לאחרונה: 17.08.2026 22:13 IDT - רגרסיה סופית 10/10 עברה
 
 מסמך זה הוא מקור המעקב השוטף של הפרויקט. מעדכנים אותו בכל מעבר שלב, לאחר בדיקה שעברה, וכאשר מתגלה חסם או שינוי בדרישות.
 
@@ -10,12 +10,12 @@
 |---|---|
 | כרטיס יעד | DE10-Standard |
 | ארכיטקטורת חובה | RV32IM single-cycle MCU |
-| זמן עדכון אחרון | 17.08.2026 21:48 IDT |
-| שלב נוכחי | שלבים 0–3 הושלמו, עברו ModelSim ותועדו; השלב הבא הוא מימוש משולב של שלבים 4–5 |
-| הושלם | baseline, ארכיטקטורה, GPIO ו-Divider Accelerator כולל unit/integration וראיות GUI |
-| הפעולה הבאה | לתכנן ולממש Basic Timer, PWM, Input Capture ו-Pushbuttons, ואז להכין להם בדיקות ModelSim נפרדות |
-| חסם נוכחי | אין; תיקוני האינטגרציה עברו רגרסיה אוטומטית |
-| Quartus | Analysis & Synthesis לאחר תיקון ה-divider hold עבר עם 0 errors ו-13 warnings |
+| זמן עדכון אחרון | 17.08.2026 22:13 IDT |
+| שלב נוכחי | שלבים 4–5 מומשו ועברו בדיקות אוטומטיות; ממתינים לשלוש בדיקות GUI ולשמירת ראיות |
+| הושלם | שלבים 0–3 עם ראיות GUI; מימוש Timer/PWM/Capture/Pushbuttons ורגרסיה אוטומטית 10/10 |
+| הפעולה הבאה | להריץ ב-ModelSim GUI את שלוש בדיקות שלבים 4–5 לפי `DOC/MODELSIM_TESTS_STAGE4_TO_STAGE5.md` |
+| חסם נוכחי | אין; שלבים 6–7 מושהים במכוון עד מעבר בדיקות GUI והכנת תוכנית חומרה 5.5 |
+| Quartus | Analysis & Synthesis עם שלבים 4–5 עבר ב-17.08.2026 22:08 IDT עם 0 errors ו-8 warnings |
 | בונוסים | Pipeline ו-UART מוקפאים עד השלמת כל דרישות החובה |
 
 ### מקרא מצבים וחותמות זמן
@@ -38,8 +38,8 @@
 | 1 | ארכיטקטורת MCU | Top-Level, מפת כתובות וממשקי bus מוגדרים | `[x | 12.08.2026 20:44 IDT]` |
 | 2 | GPIO ממופה זיכרון | LEDs, HEX ו-switches עובדים ב-ModelSim | `[x | 13.08.2026 15:04 IDT]` |
 | 3 | Divider Accelerator | `DIV/REM` וה-handshake עוברים בדיקות | `[x | 17.08.2026 21:48 IDT]` |
-| 4 | Basic Timer | counter, compare, PWM ו-capture עובדים | `[ ]` |
-| 5 | Pushbuttons | KEY1-KEY3 מסונכרנים, עוברים debounce ומייצרים אירוע יחיד | `[ ]` |
+| 4 | Basic Timer | counter, compare, PWM ו-capture עובדים | `[~ | 17.08.2026 22:09 IDT]` |
+| 5 | Pushbuttons | KEY1-KEY3 מסונכרנים, עוברים debounce ומייצרים אירוע יחיד | `[~ | 17.08.2026 22:09 IDT]` |
 | 5.5 | בדיקת חומרה מוקדמת | KEY1-KEY3 ו-PWM מודגמים פיזית על DE10-Standard | `[ ]` |
 | 6 | Interrupt Controller | IE, IFG, TYPE ותעדוף עובדים | `[ ]` |
 | 7 | פסיקות בתוך ה-CPU | כניסה ל-ISR וחזרה ממנו עובדות לפי הפרוטוקול | `[ ]` |
@@ -51,6 +51,33 @@
 ---
 
 ## יומן ביצוע ושינויים בפועל
+
+### 17.08.2026 22:13 IDT - אימות סופי לפני checkpoint
+
+- הורצו מחדש על קוד המסירה המדויק כל עשרת scripts של שלבים 0–5.
+- התקבלו עשרה סמני PASS, ללא `Failure`, ללא שגיאת קומפילציה וללא כשל assertion.
+- `git diff --check` עבר; קובצי העזר הזמניים של קריאת ה-PDF הוסרו ואינם חלק
+  מהמאגר.
+
+### 17.08.2026 22:09 IDT - שלבים 4–5 מוכנים לבדיקת GUI
+
+- מומש `basic_timer.vhd` עם BTCTL1/BTCTL2, מונה up-mode, בחירת clock-enable
+  של `/1`, ‏`/2`, ‏`/4`, ‏`/8`, compare תקופתי, שני מצבי PWM ו-input capture
+  מסונכרן בקצה עולה/יורד.
+- מומש `pushbutton_unit.vhd` עבור KEY1-KEY3 active-low: שני שלבי synchronizer,
+  debounce של 10 ms ב-25 MHz, מצב לחוץ active-high ואירוע יחיד לכל לחיצה.
+- נוסף `mcu_peripherals.vhd` שמאחד את GPIO, הטיימר והכפתורים תחת MMIO mux
+  יחיד בלי לשנות את ממשק ה-bus של ה-CPU.
+- ה-Top-Level מחבר `SW8/SW9` ל-CAPIN1/CAPIN2, ‏`LEDR8` ל-PWM ו-`LEDR9`
+  לחיווי של כל כפתור מסונן; חיבורי האירועים מוכנים לשלב 6.
+- נוספו שלושה TBs ושלושה scripts נפרדים עם Wave, List ושמירת List אוטומטית.
+- כל שלוש הבדיקות החדשות עברו: `STAGE 4 BASIC TIMER PASS`,
+  `STAGE 5 PUSHBUTTONS PASS`, ו-`STAGE 4/5 PERIPHERAL INTEGRATION PASS`.
+- רגרסיה אוטומטית מלאה של כל עשר בדיקות שלבים 0–5 עברה.
+- Quartus Analysis & Synthesis עבר עם 0 errors ו-8 warnings; אזהרות עומק קובצי
+  HEX ואותות debug שאינם נצרכים אינן חוסמות.
+- נוסף `DOC/MODELSIM_TESTS_STAGE4_TO_STAGE5.md`. שלבים 4–5 נשארים במצב
+  `~` עד שהמשתמש ישמור ראיות GUI; רק אז תיכתב תוכנית המעבדה של שלב 5.5.
 
 ### 17.08.2026 21:48 IDT - סגירת שלב 3
 
@@ -378,16 +405,19 @@
 
 מטרה: לממש מונה, compare, PWM ו-input capture לפי Figure 7 ו-Figure 8.
 
-- [ ] לממש `BTCNT` ומקורות clock נבחרים.
-- [ ] לממש `BTCTL1`: `BTINT`, `BTCLR`, `BTSSEL`, `BTHOLD`, `BTOUTEN`, `BTOUTMD`.
-- [ ] לממש `BTCTL2`: `CAPISEL` ו-`CAPMD`.
-- [ ] לממש compare registers וטעינת ערכי compare.
-- [ ] לממש compare interrupt תקופתי.
-- [ ] לממש PWM בשני מצבי output compare.
-- [ ] לממש input capture ל-`BTCAPR` בקצה עולה ובקצה יורד.
-- [ ] לסנכרן מקורות capture חיצוניים.
-- [ ] לבדוק reset, hold, clear ושינוי clock source.
-- [ ] ליצור testbench עצמאי לכל מצב לפני חיבור לפסיקות.
+- [~ | 17.08.2026 22:09 IDT] לממש `BTCNT` ומקורות clock נבחרים.
+- [~ | 17.08.2026 22:09 IDT] לממש `BTCTL1`: `BTINT`, `BTCLR`, `BTSSEL`, `BTHOLD`, `BTOUTEN`, `BTOUTMD`.
+- [~ | 17.08.2026 22:09 IDT] לממש `BTCTL2`: `CAPISEL` ו-`CAPMD`.
+- [~ | 17.08.2026 22:09 IDT] לממש compare registers וטעינת ערכי compare.
+- [~ | 17.08.2026 22:09 IDT] לממש compare interrupt תקופתי.
+- [~ | 17.08.2026 22:09 IDT] לממש PWM בשני מצבי output compare.
+- [~ | 17.08.2026 22:09 IDT] לממש input capture ל-`BTCAPR` בקצה עולה ובקצה יורד.
+- [~ | 17.08.2026 22:09 IDT] לסנכרן מקורות capture חיצוניים.
+- [~ | 17.08.2026 22:09 IDT] לבדוק reset, hold, clear ושינוי clock source.
+- [~ | 17.08.2026 22:09 IDT] ליצור testbench עצמאי לכל מצב לפני חיבור לפסיקות.
+
+מצב ביניים: כל הסעיפים מומשו ועברו בהרצה אוטומטית. הסימון יוחלף ל-`x` לאחר
+הרצת GUI ושמירת Wave/List/צילום מסך.
 
 שער יציאה: timer period, PWM duty cycle ו-captured count תואמים לערכים הצפויים.
 
@@ -395,13 +425,16 @@
 
 מטרה: להפוך את KEY1-KEY3 לקלט יציב ולמקורות פסיקה אמינים.
 
-- [ ] להתאים לפולריות active-low של לחצני DE10-Standard.
-- [ ] לסנכרן כל לחצן לשעון המערכת.
-- [ ] לממש debounce לפי דרישת המסמך.
-- [ ] לממש edge/event detection כך שלחיצה אחת יוצרת אירוע אחד.
-- [ ] לממש קריאת `PORT_PB` בכתובת `0x2014`.
-- [ ] להפיק flags נפרדים עבור KEY1, KEY2 ו-KEY3.
-- [ ] לבדוק לחיצה קצרה, לחיצה ארוכה, bounce ולחיצות סמוכות.
+- [~ | 17.08.2026 22:09 IDT] להתאים לפולריות active-low של לחצני DE10-Standard.
+- [~ | 17.08.2026 22:09 IDT] לסנכרן כל לחצן לשעון המערכת.
+- [~ | 17.08.2026 22:09 IDT] לממש debounce לפי דרישת המסמך.
+- [~ | 17.08.2026 22:09 IDT] לממש edge/event detection כך שלחיצה אחת יוצרת אירוע אחד.
+- [~ | 17.08.2026 22:09 IDT] לממש קריאת `PORT_PB` בכתובת `0x2014`.
+- [~ | 17.08.2026 22:09 IDT] להפיק flags נפרדים עבור KEY1, KEY2 ו-KEY3.
+- [~ | 17.08.2026 22:09 IDT] לבדוק לחיצה קצרה, לחיצה ארוכה, bounce ולחיצות סמוכות.
+
+מצב ביניים: כל הסעיפים מומשו ועברו בהרצה אוטומטית. הסימון יוחלף ל-`x` לאחר
+הרצת GUI ושמירת Wave/List/צילום מסך.
 
 שער יציאה: כל לחיצה חוקית נראית פעם אחת ב-MMIO ומייצרת flag יחיד.
 
@@ -568,8 +601,8 @@ Quartus/
 | RV32IM baseline | קיים חלקית | נדרש | RV32IM test1 | בהמשך |
 | GPIO | נדרש | נדרש | GPIO test0-test2 | חובה |
 | Divider | נדרש | נדרש | RV32IM/div tests | מומלץ |
-| Basic Timer | נדרש | נדרש | interrupt tests | חובה |
-| Pushbuttons | נדרש | נדרש | interrupt tests | חובה |
+| Basic Timer | עבר אוטומטית; GUI ממתין | עבר אוטומטית; GUI ממתין | interrupt tests | חובה |
+| Pushbuttons | עבר אוטומטית; GUI ממתין | עבר אוטומטית; GUI ממתין | interrupt tests | חובה |
 | Interrupt Controller | נדרש | נדרש | interrupt test1-test3 | חובה |
 | CPU interrupt FSM | נדרש | נדרש | interrupt test1-test3 | חובה |
 

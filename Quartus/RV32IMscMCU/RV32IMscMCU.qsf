@@ -19,6 +19,9 @@ set_global_assignment -name VHDL_FILE ../../DUT/RV32IMscMCU/divider_unsigned.vhd
 set_global_assignment -name VHDL_FILE ../../DUT/RV32IMscMCU/divider_accelerator.vhd
 set_global_assignment -name VHDL_FILE ../../DUT/RV32IMscMCU/mcu_interconnect.vhd
 set_global_assignment -name VHDL_FILE ../../DUT/RV32IMscMCU/gpio_peripheral.vhd
+set_global_assignment -name VHDL_FILE ../../DUT/RV32IMscMCU/basic_timer.vhd
+set_global_assignment -name VHDL_FILE ../../DUT/RV32IMscMCU/pushbutton_unit.vhd
+set_global_assignment -name VHDL_FILE ../../DUT/RV32IMscMCU/mcu_peripherals.vhd
 set_global_assignment -name VHDL_FILE ../../DUT/RV32IMscMCU/CONTROL.VHD
 set_global_assignment -name VHDL_FILE ../../DUT/RV32IMscMCU/DMEMORY.VHD
 set_global_assignment -name VHDL_FILE ../../DUT/RV32IMscMCU/EXECUTE.VHD

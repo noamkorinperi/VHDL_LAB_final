@@ -1,6 +1,6 @@
 # RV32IMscMCU - Architecture Specification
 
-Status: Phase 1 baseline architecture, 12.08.2026
+Status: Stages 4–5 integrated and automatically verified, 17.08.2026 22:09 IDT
 
 Target: Terasic DE10-Standard, Cyclone V SX SoC `5CSXFC6D6F31C6N`.
 
@@ -21,9 +21,10 @@ flowchart LR
     CPU --> ITCM["ITCM"]
     CPU <--> BUS["32-bit Data Bus"]
     BUS <--> DTCM["DTCM"]
-    BUS <--> GPIO["LEDR / HEX / SW"]
-    BUS <--> PB["KEY1-KEY3 + Debounce"]
-    BUS <--> TIMER["Basic Timer / PWM / Capture"]
+    BUS <--> PERIPH["MMIO Peripheral Mux"]
+    PERIPH <--> GPIO["LEDR / HEX / SW"]
+    PERIPH <--> PB["KEY1-KEY3 + Debounce"]
+    PERIPH <--> TIMER["Basic Timer / PWM / Capture"]
     BUS <--> INTC["Interrupt Controller"]
     CPU <--> DIV
     PB --> INTC
@@ -32,9 +33,8 @@ flowchart LR
 ```
 
 The final MCU entity is `RV32IMscMCU`, and both it and the CPU core remain
-structural.  Phase 1 instantiates the unchanged CPU datapath behind this stable
-top-level name.  Phase 2 will move the DTCM connection to the MCU data-bus
-interconnect so that reads can be returned from either DTCM or MMIO.
+structural. The CPU exposes one data bus to `mcu_interconnect`; the interconnect
+routes DTCM accesses locally and forwards MMIO accesses to `mcu_peripherals`.
 
 ## Data-bus contract
 
@@ -89,16 +89,15 @@ The canonical VHDL constants are in `mcu_memory_map_pkg.vhd`.
 
 ## Clock plan
 
-| Domain | Planned source | Purpose |
+| Domain | Source | Purpose |
 |---|---|---|
 | `CLOCK_50` | DE10-Standard 50 MHz oscillator | Board reference clock |
 | `sysclk` | Cyclone V PLL output, initially 25 MHz | CPU, DTCM, GPIO, timer and interrupt controller |
 | `DIVCLK` | 50 MHz clock derived/qualified by the clock unit | Divider's 32-cycle iterative datapath |
 
-The legacy `PLL.vhd` targets Cyclone II and is not used.  During the phase-1
-Quartus scaffold, the CPU is clocked directly by `CLOCK_50`; this only verifies
-analysis and synthesis.  Before divider integration, a Cyclone V clock/reset
-unit will provide the final domains and PLL-lock handling.
+The generated `PLL.vhd` targets Cyclone V and currently divides `CLOCK_50` by
+two for the 25 MHz `sysclk`. The divider accelerator retains the 50 MHz board
+clock and crosses to/from `sysclk` with its request/completion handshake.
 
 No fabric-generated clock may be used as a clock input.  Clock selection in the
 timer will use clock-enable pulses inside the `sysclk` domain.
@@ -111,8 +110,9 @@ timer will use clock-enable pulses inside the `sysclk` domain.
   into `sysclk` and `DIVCLK` using two flip-flops.
 - The final reset remains asserted until the Cyclone V PLL reports lock.
 - KEY1-KEY3 are data/interrupt inputs and never participate in system reset.
-- The phase-1 wrapper performs only `not KEY(0)` because the final clock/reset
-  unit is deliberately scheduled before multi-clock logic is introduced.
+- The current wrapper asserts reset while KEY0 is pressed or the PLL is not
+  locked. Synchronized reset deassertion will be reviewed before stage-5.5
+  physical programming.
 
 ## Divider handshake and CDC
 
@@ -147,12 +147,47 @@ cycle 2.  `jalr zero, 0(tp)` acts as `reti` and restores GIE.
 | `mcu_interconnect.vhd` | DTCM/MMIO select and read mux, phase 2 |
 | `gpio_peripheral.vhd` | LED/HEX/SW registers and seven-segment encoding, phase 2 |
 | `divider.vhd` | Iterative unsigned core, phase 3 |
-| `clock_reset_unit.vhd` | Cyclone V clocks, synchronized resets and CDC support |
+| `PLL.vhd` | Cyclone V 50-to-25 MHz PLL and lock indication |
 | `basic_timer.vhd` | Timer, compare, PWM and capture, phase 4 |
 | `pushbutton_unit.vhd` | Synchronization, debounce and event detection, phase 5 |
 | `interrupt_controller.vhd` | IE, IFG, TYPE and priority, phase 6 |
 
-## Phase-1 decisions
+## Stage 4–5 implementation
+
+`mcu_peripherals.vhd` is the single MMIO responder connected to the existing
+interconnect. It instantiates GPIO, Basic Timer and pushbuttons, then selects one
+read value and one `hit` response. This preserves the original CPU bus and the
+stage-0–3 simulation harness interface.
+
+The Basic Timer implements `BTCTL1`, `BTCTL2`, `BTCMPR0`, `BTCMPR1` and
+read-only `BTCAPR`. `BTCNT` is internal and is exposed only as a debug signal.
+Clock selections `/1`, `/2`, `/4` and `/8` are clock-enable pulses in the
+`sysclk` domain. Compare 0 resets the up-counter, compare 1 changes PWM duty,
+and synchronized capture inputs can latch rising or falling edges. Timer and
+button events are one-`sysclk` pulses prepared for the stage-6 controller.
+
+The pushbutton unit treats the board keys as active-low, synchronizes each input
+with two flip-flops, debounces it for 250,000 `sysclk` cycles (10 ms at 25 MHz),
+and emits one press event per stable press. `PORT_PB[2:0]` returns active-high
+pressed states for KEY1, KEY2 and KEY3 respectively.
+
+### Board-observation mapping prepared for stage 5.5
+
+| Board signal | Current function |
+|---|---|
+| `KEY0` | active-low system reset |
+| `KEY1`, `KEY2`, `KEY3` | debounced pushbuttons / future interrupt sources |
+| `SW[7:0]` | GPIO switch port |
+| `SW8` | timer `CAPIN1` |
+| `SW9` | timer `CAPIN2` |
+| `LEDR[7:0]` | GPIO LED register |
+| `LEDR8` | direct PWM observation |
+| `LEDR9` | high while any debounced key is pressed |
+
+Physical pin assignments and the dedicated smoke-test firmware remain gated on
+the user's ModelSim GUI evidence and belong to stage 5.5.
+
+## Foundation decisions
 
 1. Existing reference folders are read-only.
 2. `RV32IMscMCU` is the stable final top-level entity name.
@@ -160,5 +195,5 @@ cycle 2.  `jalr zero, 0(tp)` acts as `reti` and restores GIE.
 4. DTCM word addressing occurs only at the RAM boundary.
 5. UART addresses and vector slots are reserved but inactive.
 6. The pipeline implementation is not compiled into the mandatory design.
-7. ModelSim execution and baseline memory comparison are explicitly deferred;
-   their checklist entries remain open in `PROJECT_PLAN.md`.
+7. ModelSim and Quartus gates are tracked with timestamped evidence in
+   `PROJECT_PLAN.md`.
