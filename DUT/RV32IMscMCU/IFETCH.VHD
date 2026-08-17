@@ -25,7 +25,7 @@ ENTITY Ifetch IS
 		--Inputs
 		clk_i				: IN 	STD_LOGIC;
 		rst_i 				: IN 	STD_LOGIC;
-		stall_i             : IN    STD_LOGIC;
+		divider_hold_i      : IN    STD_LOGIC;
 		addr_gen_i 			: IN 	STD_LOGIC_VECTOR(PC_WIDTH-1 DOWNTO 0);
 		Branch_ctrl_i		: IN 	STD_LOGIC;
 		brTaken_i 			: IN 	STD_LOGIC;
@@ -103,7 +103,7 @@ PROCESS (clk_i, rst_i)
 		IF rst_i = '1' THEN
 			pc_plus4_q(PC_WIDTH-1 DOWNTO 0) <= (OTHERS => '0') ; 
 		ELSIF(clk_i'EVENT  AND clk_i='1') THEN
-			IF stall_i = '0' THEN
+			IF divider_hold_i = '0' THEN
 				pc_plus4_q(PC_WIDTH-1 DOWNTO 0) <= pc_plus4_r;
 			END IF;
 		END IF;
@@ -117,7 +117,7 @@ PROCESS (clk_i, rst_i)
 		IF rst_i = '1' THEN
 			pc_q(PC_WIDTH-1 DOWNTO 0) <= (OTHERS => '0') ; 
 		ELSIF(clk_i'EVENT  AND clk_i='1') THEN
-			IF stall_i = '0' THEN
+			IF divider_hold_i = '0' THEN
 				pc_q(PC_WIDTH-1 DOWNTO 0) <= next_pc_w;
 			END IF;
 		END IF;
@@ -127,14 +127,14 @@ END PROCESS;
 	G1: 
 	if (WORD_GRANULARITY = True) generate 		-- i.e. each WORD has unike address
 		-- The original fetch path addresses the next PC so the single-cycle core
-		-- sees the next instruction immediately after each clock edge.  During a
-		-- multi-cycle stall, however, next_pc_w already points past the held PC.
-		-- Select pc_q while stalled so the instruction being executed remains on
-		-- the decode/execute path until it is explicitly retired.
-		itcm_addr_w <= pc_q(PC_WIDTH-1 DOWNTO 2) WHEN stall_i = '1' ELSE
+		-- sees the next instruction immediately after each clock edge.  While the
+		-- multi-cycle divider holds the core, next_pc_w already points past the
+		-- held PC. Select pc_q during divider_hold_i so the DIV/REM instruction
+		-- remains on the decode/execute path until it is explicitly retired.
+		itcm_addr_w <= pc_q(PC_WIDTH-1 DOWNTO 2) WHEN divider_hold_i = '1' ELSE
 		               next_pc_w(PC_WIDTH-1 DOWNTO 2);
 	elsif (WORD_GRANULARITY = False) generate 	-- i.e. each BYTE has unike address
-		itcm_addr_w <= pc_q WHEN stall_i = '1' ELSE next_pc_w;
+		itcm_addr_w <= pc_q WHEN divider_hold_i = '1' ELSE next_pc_w;
 	end generate;
 ---------------------------------------------------------------------------------------
 	pc_o 		<= 	pc_q;

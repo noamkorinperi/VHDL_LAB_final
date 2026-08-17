@@ -163,7 +163,7 @@ package aux_package is
 			--Inputs
 			clk_i				: IN 	STD_LOGIC;
 			rst_i 				: IN 	STD_LOGIC;
-			stall_i            : IN    STD_LOGIC;
+			divider_hold_i     : IN    STD_LOGIC;
 			addr_gen_i 			: IN 	STD_LOGIC_VECTOR(PC_WIDTH-1 DOWNTO 0);
 			Branch_ctrl_i		: IN 	STD_LOGIC;
 			brTaken_i 			: IN 	STD_LOGIC;

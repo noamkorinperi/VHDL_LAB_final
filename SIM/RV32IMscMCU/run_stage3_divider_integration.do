@@ -22,14 +22,14 @@ vsim -t 1ps -L altera_mf work.tb_stage3_divider_integration
 add wave sim:/tb_stage3_divider_integration/sysclk sim:/tb_stage3_divider_integration/divclk sim:/tb_stage3_divider_integration/reset
 add wave -radix hex sim:/tb_stage3_divider_integration/pc sim:/tb_stage3_divider_integration/instruction
 add wave sim:/tb_stage3_divider_integration/div_busy sim:/tb_stage3_divider_integration/div_done sim:/tb_stage3_divider_integration/regwrite
-add wave sim:/tb_stage3_divider_integration/dut/cpu/div_start_w sim:/tb_stage3_divider_integration/dut/cpu/stall_w
+add wave sim:/tb_stage3_divider_integration/dut/cpu/div_start_w sim:/tb_stage3_divider_integration/dut/cpu/divider_hold_w
 add wave sim:/tb_stage3_divider_integration/dut/cpu/div_active_q sim:/tb_stage3_divider_integration/dut/cpu/div_retired_q
 add wave -radix hex sim:/tb_stage3_divider_integration/r1 sim:/tb_stage3_divider_integration/r2 sim:/tb_stage3_divider_integration/result
 view list
 add list sim:/tb_stage3_divider_integration/sysclk sim:/tb_stage3_divider_integration/divclk sim:/tb_stage3_divider_integration/reset
 add list -radix hex sim:/tb_stage3_divider_integration/pc sim:/tb_stage3_divider_integration/instruction
 add list sim:/tb_stage3_divider_integration/div_busy sim:/tb_stage3_divider_integration/div_done sim:/tb_stage3_divider_integration/regwrite
-add list sim:/tb_stage3_divider_integration/dut/cpu/div_start_w sim:/tb_stage3_divider_integration/dut/cpu/stall_w
+add list sim:/tb_stage3_divider_integration/dut/cpu/div_start_w sim:/tb_stage3_divider_integration/dut/cpu/divider_hold_w
 add list sim:/tb_stage3_divider_integration/dut/cpu/div_active_q sim:/tb_stage3_divider_integration/dut/cpu/div_retired_q
 add list -radix hex sim:/tb_stage3_divider_integration/r1 sim:/tb_stage3_divider_integration/r2 sim:/tb_stage3_divider_integration/result
 run -all

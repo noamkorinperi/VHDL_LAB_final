@@ -25,14 +25,15 @@ on the combinational `done` pulse can replace the DIV decode before that edge.
 
 ## Fix
 
-- `IFETCH.VHD` selects `pc_q` as the ITCM address while `stall_i='1'`.
+- `IFETCH.VHD` selects `pc_q` as the ITCM address while
+  `divider_hold_i='1'`.
 - `RV32I_CORE.vhd` adds `div_retired_q`. The DIV instruction stays stalled
   through its single write-back edge, then receives exactly one release cycle.
 - A new request is blocked while the previous instruction is being retired.
 - The release flag clears after one clock, including for back-to-back divider
   instructions.
-- The Stage 3 integration Wave/List now includes `div_start_w`, `stall_w`,
-  `div_active_q`, and `div_retired_q`.
+- The Stage 3 integration Wave/List now includes `div_start_w`,
+  `divider_hold_w`, `div_active_q`, and `div_retired_q`.
 
 ## Verification
 

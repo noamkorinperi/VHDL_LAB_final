@@ -76,7 +76,7 @@ architecture structure of RV32I_CORE is
     signal div_active_q : std_logic := '0';
     signal div_retired_q : std_logic := '0';
     signal div_result_w : std_logic_vector(31 downto 0);
-    signal stall_w      : std_logic;
+    signal divider_hold_w : std_logic;
 
     signal mclk_cnt_q : std_logic_vector(CLK_CNT_WIDTH-1 downto 0) := (others => '0');
 
@@ -84,7 +84,7 @@ architecture structure of RV32I_CORE is
     attribute keep of pc_w, instruction_w, read_data1_w, read_data2_w : signal is true;
     attribute keep of execute_result_w, reg_write_effective_w, mem_write_w : signal is true;
     attribute keep of mem_read_w, branch_w, branch_taken_w, mul_op_w : signal is true;
-    attribute keep of div_busy_w, div_done_w, div_result_w, stall_w : signal is true;
+    attribute keep of div_busy_w, div_done_w, div_result_w, divider_hold_w : signal is true;
 begin
     fetch_unit : entity work.Ifetch
         generic map (
@@ -98,7 +98,7 @@ begin
         port map (
             clk_i         => clk_i,
             rst_i         => rst_i,
-            stall_i       => stall_w,
+            divider_hold_i => divider_hold_w,
             addr_gen_i    => addr_gen_w,
             Branch_ctrl_i => branch_w,
             brTaken_i     => branch_taken_w,
@@ -180,7 +180,7 @@ begin
     -- its result. div_retired_q releases fetch only after that edge and also
     -- prevents the still-visible instruction from launching a second request.
     div_start_w       <= div_instruction_w and not div_active_q and not div_retired_q;
-    stall_w           <= div_instruction_w and not div_retired_q;
+    divider_hold_w    <= div_instruction_w and not div_retired_q;
     writeback_result_w <= div_result_w when div_instruction_w = '1' else execute_result_w;
     reg_write_effective_w <= reg_write_control_w when div_instruction_w = '0' else div_done_w;
 

@@ -24,7 +24,7 @@
 - חלוקה באפס ו-signed overflow ממומשים לפי RV32M.
 - toggle handshake עם synchronizers מעביר request/result בין sysclk ל-DIVCLK;
   operand/result buses נשמרים יציבים עד לקבלת acknowledgement.
-- IFETCH מקבל `stall_i`; ה-PC מוחזק בזמן הפעולה, וה-register file מקבל
+- IFETCH מקבל `divider_hold_i`; ה-PC מוחזק בזמן הפעולה, וה-register file מקבל
   write-enable רק בפולס `done`.
 - ה-top מפיק sysclk של 25 MHz בעזרת PLL ומפעיל את המחלק מ-CLOCK_50 של 50 MHz.
 
