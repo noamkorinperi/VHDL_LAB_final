@@ -74,6 +74,7 @@ architecture structure of RV32I_CORE is
     signal div_instruction_w : std_logic;
     signal div_start_w, div_busy_w, div_done_w : std_logic;
     signal div_active_q : std_logic := '0';
+    signal div_retired_q : std_logic := '0';
     signal div_result_w : std_logic_vector(31 downto 0);
     signal stall_w      : std_logic;
 
@@ -175,8 +176,11 @@ begin
         );
 
     div_instruction_w <= '1' when div_op_w /= DIVOP_NONE else '0';
-    div_start_w       <= div_instruction_w and not div_active_q;
-    stall_w           <= div_instruction_w and not div_done_w;
+    -- Keep the divider instruction visible through the clock edge that writes
+    -- its result. div_retired_q releases fetch only after that edge and also
+    -- prevents the still-visible instruction from launching a second request.
+    div_start_w       <= div_instruction_w and not div_active_q and not div_retired_q;
+    stall_w           <= div_instruction_w and not div_retired_q;
     writeback_result_w <= div_result_w when div_instruction_w = '1' else execute_result_w;
     reg_write_effective_w <= reg_write_control_w when div_instruction_w = '0' else div_done_w;
 
@@ -184,11 +188,19 @@ begin
     begin
         if rst_i = '1' then
             div_active_q <= '0';
+            div_retired_q <= '0';
         elsif rising_edge(clk_i) then
             if div_done_w = '1' then
                 div_active_q <= '0';
+                div_retired_q <= '1';
+            elsif div_retired_q = '1' then
+                -- One release cycle advances fetch to the following
+                -- instruction. Clearing here also supports two divider
+                -- instructions placed back-to-back.
+                div_retired_q <= '0';
             elsif div_start_w = '1' then
                 div_active_q <= '1';
+                div_retired_q <= '0';
             end if;
         end if;
     end process;

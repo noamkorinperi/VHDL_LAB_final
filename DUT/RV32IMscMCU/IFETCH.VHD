@@ -126,9 +126,15 @@ END PROCESS;
 	-- send address to inst. memory address register
 	G1: 
 	if (WORD_GRANULARITY = True) generate 		-- i.e. each WORD has unike address
-		itcm_addr_w <= next_pc_w(PC_WIDTH-1 DOWNTO 2);
+		-- The original fetch path addresses the next PC so the single-cycle core
+		-- sees the next instruction immediately after each clock edge.  During a
+		-- multi-cycle stall, however, next_pc_w already points past the held PC.
+		-- Select pc_q while stalled so the instruction being executed remains on
+		-- the decode/execute path until it is explicitly retired.
+		itcm_addr_w <= pc_q(PC_WIDTH-1 DOWNTO 2) WHEN stall_i = '1' ELSE
+		               next_pc_w(PC_WIDTH-1 DOWNTO 2);
 	elsif (WORD_GRANULARITY = False) generate 	-- i.e. each BYTE has unike address
-		itcm_addr_w <= next_pc_w;
+		itcm_addr_w <= pc_q WHEN stall_i = '1' ELSE next_pc_w;
 	end generate;
 ---------------------------------------------------------------------------------------
 	pc_o 		<= 	pc_q;
