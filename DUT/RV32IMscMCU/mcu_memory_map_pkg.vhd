@@ -46,6 +46,13 @@ package mcu_memory_map_pkg is
     constant C_IRQ_TYPE_KEY2  : std_logic_vector(7 downto 0) := x"18";
     constant C_IRQ_TYPE_KEY3  : std_logic_vector(7 downto 0) := x"1C";
 
+    constant C_IRQ_RX_BIT     : natural := 0;
+    constant C_IRQ_TX_BIT     : natural := 1;
+    constant C_IRQ_TIMER_BIT  : natural := 2;
+    constant C_IRQ_KEY1_BIT   : natural := 3;
+    constant C_IRQ_KEY2_BIT   : natural := 4;
+    constant C_IRQ_KEY3_BIT   : natural := 5;
+
     function is_dtcm_address(address : address_t) return boolean;
     function is_mmio_address(address : address_t) return boolean;
 end package;

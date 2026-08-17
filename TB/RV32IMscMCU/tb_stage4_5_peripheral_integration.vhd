@@ -30,11 +30,14 @@ begin
             read_data_o => read_data, hit_o => hit,
             switches_i => switches, keys_n_i => keys_n,
             capin1_i => capin1, capin2_i => capin2,
+            gie_i => '0', inta_i => '0',
             ledr_o => ledr, hex0_o => hex0, hex1_o => hex1,
             hex2_o => hex2, hex3_o => hex3, hex4_o => hex4, hex5_o => hex5,
             pwm_o => pwm, timer_event_o => timer_event,
             key_event_o => key_event, button_state_o => button_state,
-            timer_count_o => timer_count, timer_capture_o => timer_capture
+            timer_count_o => timer_count, timer_capture_o => timer_capture,
+            intr_o => open, interrupt_type_o => open,
+            interrupt_ie_o => open, interrupt_ifg_o => open
         );
 
     stimulus : process

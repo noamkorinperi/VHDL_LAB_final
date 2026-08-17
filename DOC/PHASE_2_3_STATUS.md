@@ -26,7 +26,9 @@
   operand/result buses נשמרים יציבים עד לקבלת acknowledgement.
 - IFETCH מקבל `divider_hold_i`; ה-PC מוחזק בזמן הפעולה, וה-register file מקבל
   write-enable רק בפולס `done`.
-- ה-top מפיק sysclk של 25 MHz בעזרת PLL ומפעיל את המחלק מ-CLOCK_50 של 50 MHz.
+- ה-top מפיק sysclk של 20 MHz בעזרת PLL ומפעיל את המחלק מ-CLOCK_50 של 50 MHz.
+  התדר עודכן מ-25 MHz ב-17.08.2026 לאחר בדיקת timing מלאה, כדי לסגור את
+  מסלול ה-setup החצי-מחזורי אל DTCM.
 
 ## מצב אימות — הושלם 17.08.2026 21:48 IDT
 

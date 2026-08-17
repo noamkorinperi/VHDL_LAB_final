@@ -12,6 +12,7 @@ vcom -2008 ../../DUT/RV32IMscMCU/mcu_interconnect.vhd
 vcom -2008 ../../DUT/RV32IMscMCU/gpio_peripheral.vhd
 vcom -2008 ../../DUT/RV32IMscMCU/basic_timer.vhd
 vcom -2008 ../../DUT/RV32IMscMCU/pushbutton_unit.vhd
+vcom -2008 ../../DUT/RV32IMscMCU/interrupt_controller.vhd
 vcom -2008 ../../DUT/RV32IMscMCU/mcu_peripherals.vhd
 vcom -2008 ../../DUT/RV32IMscMCU/CONTROL.VHD
 vcom -2008 ../../DUT/RV32IMscMCU/DMEMORY.VHD

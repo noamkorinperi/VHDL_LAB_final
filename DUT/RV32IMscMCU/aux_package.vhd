@@ -28,11 +28,14 @@ package aux_package is
 			rst_i		 		:IN		STD_LOGIC;
 			clk_i				:IN		STD_LOGIC;
 			divclk_i			:IN		STD_LOGIC;
+			intr_i				:IN		STD_LOGIC;
 			dbus_rdata_i		:IN		STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
 			dbus_addr_o		:OUT	STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
 			dbus_wdata_o		:OUT	STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
 			dbus_read_o		:OUT	STD_LOGIC;
 			dbus_write_o		:OUT	STD_LOGIC;
+			inta_o				:OUT	STD_LOGIC;
+			gie_o				:OUT	STD_LOGIC;
 			
 			--Outputs (used also for Signal-Tap auxiliary pins)
 			pc_o				:OUT	STD_LOGIC_VECTOR(PC_WIDTH-1 DOWNTO 0);
@@ -55,6 +58,8 @@ package aux_package is
 			div_busy_o			:OUT	STD_LOGIC;
 			div_done_o			:OUT	STD_LOGIC;
 			div_result_o		:OUT	STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
+			irq_active_o		:OUT	STD_LOGIC;
+			irq_type_o			:OUT	STD_LOGIC_VECTOR(7 DOWNTO 0);
 			
 			mclk_cnt_o			:OUT	STD_LOGIC_VECTOR(CLK_CNT_WIDTH-1 DOWNTO 0)
 		);		
@@ -142,11 +147,17 @@ package aux_package is
 			RegDst_ctrl_i 	: IN 	STD_LOGIC;
 			RegWrite_ctrl_i : IN 	STD_LOGIC;
 			MemtoReg_ctrl_i : IN 	STD_LOGIC;
+			irq_enter_i     : IN    STD_LOGIC;
+			irq_return_i    : IN    STD_LOGIC;
+			irq_save_return_i : IN  STD_LOGIC;
+			irq_resume_pc_i : IN    STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
 			
 			--Outputs
 			read_data1_o	: OUT	STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
 			read_data2_o	: OUT STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
-			SignExt_o 		: OUT STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0)		 
+			SignExt_o 		: OUT STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
+			gie_o           : OUT STD_LOGIC;
+			tp_o            : OUT STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0)
 		);
 	end component;
 ---------------------------------------------------------		
@@ -164,6 +175,9 @@ package aux_package is
 			clk_i				: IN 	STD_LOGIC;
 			rst_i 				: IN 	STD_LOGIC;
 			divider_hold_i     : IN    STD_LOGIC;
+			interrupt_hold_i   : IN    STD_LOGIC;
+			interrupt_vector_load_i : IN STD_LOGIC;
+			interrupt_vector_i : IN STD_LOGIC_VECTOR(PC_WIDTH-1 DOWNTO 0);
 			addr_gen_i 			: IN 	STD_LOGIC_VECTOR(PC_WIDTH-1 DOWNTO 0);
 			Branch_ctrl_i		: IN 	STD_LOGIC;
 			brTaken_i 			: IN 	STD_LOGIC;

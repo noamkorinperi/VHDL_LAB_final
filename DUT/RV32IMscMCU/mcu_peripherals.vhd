@@ -5,7 +5,7 @@ use ieee.std_logic_1164.all;
 -- now so stage 6 can connect them without changing the timer/button interfaces.
 entity mcu_peripherals is
     generic (
-        PB_DEBOUNCE_CYCLES : positive := 250000
+        PB_DEBOUNCE_CYCLES : positive := 200000
     );
     port (
         clk_i        : in  std_logic;
@@ -21,6 +21,8 @@ entity mcu_peripherals is
         keys_n_i   : in std_logic_vector(2 downto 0);
         capin1_i   : in std_logic;
         capin2_i   : in std_logic;
+        gie_i      : in std_logic;
+        inta_i     : in std_logic;
 
         ledr_o : out std_logic_vector(7 downto 0);
         hex0_o : out std_logic_vector(6 downto 0);
@@ -36,13 +38,20 @@ entity mcu_peripherals is
         button_state_o: out std_logic_vector(2 downto 0);
 
         timer_count_o   : out std_logic_vector(31 downto 0);
-        timer_capture_o : out std_logic_vector(31 downto 0)
+        timer_capture_o : out std_logic_vector(31 downto 0);
+        intr_o           : out std_logic;
+        interrupt_type_o : out std_logic_vector(7 downto 0);
+        interrupt_ie_o   : out std_logic_vector(7 downto 0);
+        interrupt_ifg_o  : out std_logic_vector(7 downto 0)
     );
 end entity;
 
 architecture structural of mcu_peripherals is
-    signal gpio_rdata_w, timer_rdata_w, button_rdata_w : std_logic_vector(31 downto 0);
-    signal gpio_hit_w, timer_hit_w, button_hit_w : std_logic;
+    signal gpio_rdata_w, timer_rdata_w, button_rdata_w, interrupt_rdata_w :
+        std_logic_vector(31 downto 0);
+    signal gpio_hit_w, timer_hit_w, button_hit_w, interrupt_hit_w : std_logic;
+    signal timer_event_w : std_logic;
+    signal key_event_w : std_logic_vector(2 downto 0);
 begin
     gpio : entity work.gpio_peripheral
         port map (
@@ -77,7 +86,7 @@ begin
             capin1_i => capin1_i,
             capin2_i => capin2_i,
             pwm_o => pwm_o,
-            btifg_event_o => timer_event_o,
+            btifg_event_o => timer_event_w,
             compare0_event_o => open,
             compare1_event_o => open,
             capture_event_o => open,
@@ -98,13 +107,36 @@ begin
             hit_o => button_hit_w,
             keys_n_i => keys_n_i,
             buttons_o => button_state_o,
-            press_event_o => key_event_o
+            press_event_o => key_event_w
+        );
+
+    interrupts : entity work.interrupt_controller
+        port map (
+            clk_i => clk_i,
+            reset_i => reset_i,
+            address_i => address_i,
+            write_data_i => write_data_i,
+            read_i => read_i,
+            write_i => write_i,
+            read_data_o => interrupt_rdata_w,
+            hit_o => interrupt_hit_w,
+            timer_event_i => timer_event_w,
+            key_event_i => key_event_w,
+            gie_i => gie_i,
+            inta_i => inta_i,
+            intr_o => intr_o,
+            type_o => interrupt_type_o,
+            ie_o => interrupt_ie_o,
+            ifg_o => interrupt_ifg_o
         );
 
     read_data_o <= gpio_rdata_w when gpio_hit_w = '1' else
                    timer_rdata_w when timer_hit_w = '1' else
                    button_rdata_w when button_hit_w = '1' else
+                   interrupt_rdata_w when interrupt_hit_w = '1' else
                    (others => '0');
 
-    hit_o <= gpio_hit_w or timer_hit_w or button_hit_w;
+    hit_o <= gpio_hit_w or timer_hit_w or button_hit_w or interrupt_hit_w;
+    timer_event_o <= timer_event_w;
+    key_event_o <= key_event_w;
 end architecture;

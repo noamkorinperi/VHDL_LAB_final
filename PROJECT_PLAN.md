@@ -1,6 +1,6 @@
 # תוכנית עבודה ומעקב - RV32IM MCU על DE10-Standard
 
-עודכן לאחרונה: 17.08.2026 22:13 IDT - רגרסיה סופית 10/10 עברה
+עודכן לאחרונה: 17.08.2026 23:07 IDT - רגרסיית 13 הבדיקות עברה
 
 מסמך זה הוא מקור המעקב השוטף של הפרויקט. מעדכנים אותו בכל מעבר שלב, לאחר בדיקה שעברה, וכאשר מתגלה חסם או שינוי בדרישות.
 
@@ -10,12 +10,12 @@
 |---|---|
 | כרטיס יעד | DE10-Standard |
 | ארכיטקטורת חובה | RV32IM single-cycle MCU |
-| זמן עדכון אחרון | 17.08.2026 22:13 IDT |
-| שלב נוכחי | שלבים 4–5 מומשו ועברו בדיקות אוטומטיות; ממתינים לשלוש בדיקות GUI ולשמירת ראיות |
-| הושלם | שלבים 0–3 עם ראיות GUI; מימוש Timer/PWM/Capture/Pushbuttons ורגרסיה אוטומטית 10/10 |
-| הפעולה הבאה | להריץ ב-ModelSim GUI את שלוש בדיקות שלבים 4–5 לפי `DOC/MODELSIM_TESTS_STAGE4_TO_STAGE5.md` |
-| חסם נוכחי | אין; שלבים 6–7 מושהים במכוון עד מעבר בדיקות GUI והכנת תוכנית חומרה 5.5 |
-| Quartus | Analysis & Synthesis עם שלבים 4–5 עבר ב-17.08.2026 22:08 IDT עם 0 errors ו-8 warnings |
+| זמן עדכון אחרון | 17.08.2026 23:07 IDT |
+| שלב נוכחי | שלב 5.5 מוכן למעבדה; שלבים 6–7 מוכנים לבדיקות ModelSim GUI |
+| הושלם | שלבים 0–5 עם ראיות GUI; מימוש אוטומטי של Interrupt Controller וכניסה/יציאה מפסיקה |
+| הפעולה הבאה | במעבדה לבצע את `DOC/PHYSICAL_LAB_TEST_STAGE5_5.md`, ולאחר מכן את שתי בדיקות שלבים 6–7 |
+| חסם נוכחי | אין; השלמת 5.5 תלויה בגישה פיזית לכרטיס, וסגירת 6–7 תלויה בשמירת ראיות GUI |
+| Quartus | Full Compilation ו-Timing עברו ב-17.08.2026 22:56 IDT; הופק SOF ו-worst setup slack הוא ‎+2.631 ns |
 | בונוסים | Pipeline ו-UART מוקפאים עד השלמת כל דרישות החובה |
 
 ### מקרא מצבים וחותמות זמן
@@ -38,19 +38,64 @@
 | 1 | ארכיטקטורת MCU | Top-Level, מפת כתובות וממשקי bus מוגדרים | `[x | 12.08.2026 20:44 IDT]` |
 | 2 | GPIO ממופה זיכרון | LEDs, HEX ו-switches עובדים ב-ModelSim | `[x | 13.08.2026 15:04 IDT]` |
 | 3 | Divider Accelerator | `DIV/REM` וה-handshake עוברים בדיקות | `[x | 17.08.2026 21:48 IDT]` |
-| 4 | Basic Timer | counter, compare, PWM ו-capture עובדים | `[~ | 17.08.2026 22:09 IDT]` |
-| 5 | Pushbuttons | KEY1-KEY3 מסונכרנים, עוברים debounce ומייצרים אירוע יחיד | `[~ | 17.08.2026 22:09 IDT]` |
-| 5.5 | בדיקת חומרה מוקדמת | KEY1-KEY3 ו-PWM מודגמים פיזית על DE10-Standard | `[ ]` |
-| 6 | Interrupt Controller | IE, IFG, TYPE ותעדוף עובדים | `[ ]` |
-| 7 | פסיקות בתוך ה-CPU | כניסה ל-ISR וחזרה ממנו עובדות לפי הפרוטוקול | `[ ]` |
+| 4 | Basic Timer | counter, compare, PWM ו-capture עובדים | `[x | 17.08.2026 22:21 IDT]` |
+| 5 | Pushbuttons | KEY1-KEY3 מסונכרנים, עוברים debounce ומייצרים אירוע יחיד | `[x | 17.08.2026 22:21 IDT]` |
+| 5.5 | בדיקת חומרה מוקדמת | KEY1-KEY3 ו-PWM מודגמים פיזית על DE10-Standard | `[~ | 17.08.2026 22:58 IDT]` |
+| 6 | Interrupt Controller | IE, IFG, TYPE ותעדוף עובדים | `[~ | 17.08.2026 22:58 IDT]` |
+| 7 | פסיקות בתוך ה-CPU | כניסה ל-ISR וחזרה ממנו עובדות לפי הפרוטוקול | `[~ | 17.08.2026 22:58 IDT]` |
 | 8 | אינטגרציה ואימות מלא | benchmarks עוברים מול RARS | `[ ]` |
-| 9 | Quartus ו-DE10-Standard | קומפילציה, pin assignment וקובץ SOF | `[ ]` |
+| 9 | Quartus ו-DE10-Standard | קומפילציה, pin assignment וקובץ SOF | `[~ | 17.08.2026 22:58 IDT]` |
 | 10 | SignalTap ו-PPA | הוכחת FPGA ודוחות Area/Fmax/Power | `[ ]` |
 | 11 | דוח והגשה | `Final_report.pdf` ו-ZIP נקיים לפי המבנה הנדרש | `[ ]` |
 
 ---
 
 ## יומן ביצוע ושינויים בפועל
+
+### 17.08.2026 23:07 IDT - רגרסיה מלאה לאחר שלבים 6–7
+
+- הורצו ברצף כל 13 ה-scripts משלבים 0–7, כולל בדיקת קושחת 5.5.
+- התקבלו 13 סמני PASS, ללא `Failure`, ללא שגיאת macro וללא שגיאת קומפילציה.
+- בכך אומת שהוספת בקר הפסיקות ו-FSM הכניסה/חזרה לא שברה את ה-baseline,
+  GPIO, המחלק, הטיימר או הכפתורים.
+
+### 17.08.2026 23:06 IDT - preflight לקושחת שלב 5.5
+
+- נוסף `tb_stage5_5_smoke_firmware.vhd` שמריץ בסימולציה את אותו קובץ
+  `ITCM_stage5_5.hex` ששובץ ב-SOF.
+- הבדיקה מאמתת שהקושחה מציגה `C` ב-HEX0, מעבירה את KEY1-KEY3 אל
+  LEDR2:0 ומייצרת מעבר PWM לאחר סף `BTCMPR1`.
+- נוסף `run_stage5_5_smoke_firmware.do` עם Wave/List, והתקבל
+  `STAGE 5.5 SMOKE FIRMWARE PASS`.
+- שלב 5.5 נשאר במצב `~`: ה-preflight עבר, אך שער היציאה דורש עדיין צריבה
+  ובדיקה על כרטיס DE10-Standard אמיתי.
+
+### 17.08.2026 22:58 IDT - הכנת שלב 5.5 ושלבים 6–7
+
+- הושלמו pin assignments מלאים ל-DE10-Standard ונוספה תוכנת smoke-test
+  שמציגה `C` ב-HEX0, מציגה את KEY1-KEY3 ב-LEDR2:0 ומפעילה PWM ב-LEDR8.
+- נכתב `DOC/PHYSICAL_LAB_TEST_STAGE5_5.md` עם סדר צריבה, תרחישי reset,
+  כפתורים, PWM ורשימת הראיות שיש לשמור.
+- Full Compilation הושלם: Map, Fitter ו-Assembler עברו עם 0 errors והופק
+  `RV32IMscMCU.sof`.
+- בדיקת timing ראשונה ב-25 MHz חשפה setup slack שלילי של ‎-1.370 ns במסלול
+  החצי-מחזור אל DTCM. שעון הליבה עודכן ל-20 MHz, בהתאם לקבועי הזמן של
+  benchmarks המרצה, ו-debounce עודכן ל-200,000 מחזורים כדי לשמור 10 ms.
+- לאחר התיקון כל בדיקות setup/hold עברו; ה-worst setup slack הוא ‎+2.631 ns.
+- מומש `interrupt_controller.vhd` עם IE/IFG/TYPE, mask, priority, clear
+  אוטומטי לטיימר ו-clear תוכנתי לכפתורים; unit test של שלב 6 עבר.
+- נוספה לליבה כניסת פסיקה בשני מחזורים, GIE ב-`gp[0]`, שמירת כתובת החזרה
+  ב-`tp`, קפיצה דרך vector table ו-`reti`; benchmark `test2` עם שלושת
+  הכפתורים עבר בבדיקת האינטגרציה של שלב 7.
+- נכתב `DOC/MODELSIM_TESTS_STAGE6_TO_STAGE7.md`; שלבים 6–7 נשארים במצב `~`
+  עד להרצת GUI ושמירת Wave/List/צילום מסך.
+
+### 17.08.2026 22:21 IDT - סגירת שלבים 4–5
+
+- המשתמש דיווח שכל שלוש בדיקות ה-GUI עברו בהצלחה.
+- נשמרו צילום מסך, Wave ו-List עבור Basic Timer, Pushbuttons ואינטגרציית
+  peripheral/MMIO בתיקיות הראיות המתאימות.
+- שלבים 4 ו-5 סומנו `x`; ניתן לעבור לבדיקת החומרה המוקדמת 5.5.
 
 ### 17.08.2026 22:13 IDT - אימות סופי לפני checkpoint
 
@@ -405,19 +450,18 @@
 
 מטרה: לממש מונה, compare, PWM ו-input capture לפי Figure 7 ו-Figure 8.
 
-- [~ | 17.08.2026 22:09 IDT] לממש `BTCNT` ומקורות clock נבחרים.
-- [~ | 17.08.2026 22:09 IDT] לממש `BTCTL1`: `BTINT`, `BTCLR`, `BTSSEL`, `BTHOLD`, `BTOUTEN`, `BTOUTMD`.
-- [~ | 17.08.2026 22:09 IDT] לממש `BTCTL2`: `CAPISEL` ו-`CAPMD`.
-- [~ | 17.08.2026 22:09 IDT] לממש compare registers וטעינת ערכי compare.
-- [~ | 17.08.2026 22:09 IDT] לממש compare interrupt תקופתי.
-- [~ | 17.08.2026 22:09 IDT] לממש PWM בשני מצבי output compare.
-- [~ | 17.08.2026 22:09 IDT] לממש input capture ל-`BTCAPR` בקצה עולה ובקצה יורד.
-- [~ | 17.08.2026 22:09 IDT] לסנכרן מקורות capture חיצוניים.
-- [~ | 17.08.2026 22:09 IDT] לבדוק reset, hold, clear ושינוי clock source.
-- [~ | 17.08.2026 22:09 IDT] ליצור testbench עצמאי לכל מצב לפני חיבור לפסיקות.
+- [x | 17.08.2026 22:21 IDT] לממש `BTCNT` ומקורות clock נבחרים.
+- [x | 17.08.2026 22:21 IDT] לממש `BTCTL1`: `BTINT`, `BTCLR`, `BTSSEL`, `BTHOLD`, `BTOUTEN`, `BTOUTMD`.
+- [x | 17.08.2026 22:21 IDT] לממש `BTCTL2`: `CAPISEL` ו-`CAPMD`.
+- [x | 17.08.2026 22:21 IDT] לממש compare registers וטעינת ערכי compare.
+- [x | 17.08.2026 22:21 IDT] לממש compare interrupt תקופתי.
+- [x | 17.08.2026 22:21 IDT] לממש PWM בשני מצבי output compare.
+- [x | 17.08.2026 22:21 IDT] לממש input capture ל-`BTCAPR` בקצה עולה ובקצה יורד.
+- [x | 17.08.2026 22:21 IDT] לסנכרן מקורות capture חיצוניים.
+- [x | 17.08.2026 22:21 IDT] לבדוק reset, hold, clear ושינוי clock source.
+- [x | 17.08.2026 22:21 IDT] ליצור testbench עצמאי לכל מצב לפני חיבור לפסיקות.
 
-מצב ביניים: כל הסעיפים מומשו ועברו בהרצה אוטומטית. הסימון יוחלף ל-`x` לאחר
-הרצת GUI ושמירת Wave/List/צילום מסך.
+מצב: כל הסעיפים עברו בהרצה אוטומטית וב-GUI, והראיות נשמרו.
 
 שער יציאה: timer period, PWM duty cycle ו-captured count תואמים לערכים הצפויים.
 
@@ -425,16 +469,15 @@
 
 מטרה: להפוך את KEY1-KEY3 לקלט יציב ולמקורות פסיקה אמינים.
 
-- [~ | 17.08.2026 22:09 IDT] להתאים לפולריות active-low של לחצני DE10-Standard.
-- [~ | 17.08.2026 22:09 IDT] לסנכרן כל לחצן לשעון המערכת.
-- [~ | 17.08.2026 22:09 IDT] לממש debounce לפי דרישת המסמך.
-- [~ | 17.08.2026 22:09 IDT] לממש edge/event detection כך שלחיצה אחת יוצרת אירוע אחד.
-- [~ | 17.08.2026 22:09 IDT] לממש קריאת `PORT_PB` בכתובת `0x2014`.
-- [~ | 17.08.2026 22:09 IDT] להפיק flags נפרדים עבור KEY1, KEY2 ו-KEY3.
-- [~ | 17.08.2026 22:09 IDT] לבדוק לחיצה קצרה, לחיצה ארוכה, bounce ולחיצות סמוכות.
+- [x | 17.08.2026 22:21 IDT] להתאים לפולריות active-low של לחצני DE10-Standard.
+- [x | 17.08.2026 22:21 IDT] לסנכרן כל לחצן לשעון המערכת.
+- [x | 17.08.2026 22:21 IDT] לממש debounce לפי דרישת המסמך.
+- [x | 17.08.2026 22:21 IDT] לממש edge/event detection כך שלחיצה אחת יוצרת אירוע אחד.
+- [x | 17.08.2026 22:21 IDT] לממש קריאת `PORT_PB` בכתובת `0x2014`.
+- [x | 17.08.2026 22:21 IDT] להפיק flags נפרדים עבור KEY1, KEY2 ו-KEY3.
+- [x | 17.08.2026 22:21 IDT] לבדוק לחיצה קצרה, לחיצה ארוכה, bounce ולחיצות סמוכות.
 
-מצב ביניים: כל הסעיפים מומשו ועברו בהרצה אוטומטית. הסימון יוחלף ל-`x` לאחר
-הרצת GUI ושמירת Wave/List/צילום מסך.
+מצב: כל הסעיפים עברו בהרצה אוטומטית וב-GUI, והראיות נשמרו.
 
 שער יציאה: כל לחיצה חוקית נראית פעם אחת ב-MMIO ומייצרת flag יחיד.
 
@@ -446,14 +489,16 @@
 תנאי כניסה: שלבים 0–5 עברו את בדיקות ModelSim שלהם, ובפרט בדיקות ה-timer,
 ה-PWM, הסנכרון וה-debounce.
 
-- [ ] להשלים pin assignments רשמיים עבור `CLOCK_50`, `KEY`, `SW`, `LEDR`,
+- [x | 17.08.2026 22:43 IDT] להשלים pin assignments רשמיים עבור `CLOCK_50`, `KEY`, `SW`, `LEDR`,
   `HEX` ופין ה-PWM הנבחר; אין להסתמך על הקצאת פינים אוטומטית.
-- [ ] להוסיף יציאת PWM פיזית ל-Top-Level ולנתב אותה ל-LEDR או לפין GPIO
+- [x | 17.08.2026 22:09 IDT] להוסיף יציאת PWM פיזית ל-Top-Level ולנתב אותה ל-LEDR או לפין GPIO
   מתאים למדידה.
-- [ ] לחבר את KEY1-KEY3 ללוגיקת שלב 5, תוך שמירת KEY0 כ-reset active-low.
-- [ ] להכין תוכנת או תצורת smoke-test שבה כל לחיצה חוקית משנה LED/HEX פעם
+- [x | 17.08.2026 22:09 IDT] לחבר את KEY1-KEY3 ללוגיקת שלב 5, תוך שמירת KEY0 כ-reset active-low.
+- [x | 17.08.2026 22:43 IDT] להכין תוכנת או תצורת smoke-test שבה כל לחיצה חוקית משנה LED/HEX פעם
   אחת, והכפתורים משנים ערך duty cycle ניתן לצפייה.
-- [ ] לבצע Quartus Full Compilation, לסקור warnings ולהפיק קובץ `.sof`.
+- [x | 17.08.2026 22:56 IDT] לבצע Quartus Full Compilation, לסקור warnings ולהפיק קובץ `.sof`.
+- [x | 17.08.2026 23:06 IDT] להריץ preflight אוטומטי על קובץ ה-ITCM המדויק
+  ששובץ ב-SOF ולאמת HEX0, כפתורים ו-PWM.
 - [ ] לצרוב את ה-SOF ולבדוק reset, לחיצה קצרה, לחיצה ארוכה, bounce ולחיצות
   סמוכות על הכרטיס.
 - [ ] לבדוק PWM בכמה ערכי duty cycle; ב-LEDR לפי עוצמת הארה, ובמידת האפשר
@@ -471,14 +516,14 @@
 
 מטרה: לרכז מקורות פסיקה, mask, flags, type ותעדוף.
 
-- [ ] לממש את רגיסטרי `IE`, `IFG` ו-`TYPE`.
-- [ ] לחבר `BTIFG` ואת flags של KEY1-KEY3.
-- [ ] לשמור את ביטי UART שמורים או מנוטרלים כל עוד הבונוס אינו ממומש.
-- [ ] לממש priority encoder לפי טבלת הווקטורים.
-- [ ] להפיק `INTR` רק כאשר יש pending enabled interrupt ו-GIE פעיל.
-- [ ] לממש `INTA`/service acknowledgement לפי הפרוטוקול.
-- [ ] לממש clear אוטומטי או software clear לפי סוג המקור.
-- [ ] לבדוק מקור יחיד, כמה מקורות יחד, mask ושינוי priority.
+- [~ | 17.08.2026 22:58 IDT] לממש את רגיסטרי `IE`, `IFG` ו-`TYPE`.
+- [~ | 17.08.2026 22:58 IDT] לחבר `BTIFG` ואת flags של KEY1-KEY3.
+- [~ | 17.08.2026 22:58 IDT] לשמור את ביטי UART שמורים או מנוטרלים כל עוד הבונוס אינו ממומש.
+- [~ | 17.08.2026 22:58 IDT] לממש priority encoder לפי טבלת הווקטורים.
+- [~ | 17.08.2026 22:58 IDT] להפיק `INTR` רק כאשר יש pending enabled interrupt ו-GIE פעיל.
+- [~ | 17.08.2026 22:58 IDT] לממש `INTA`/service acknowledgement לפי הפרוטוקול.
+- [~ | 17.08.2026 22:58 IDT] לממש clear אוטומטי או software clear לפי סוג המקור.
+- [~ | 17.08.2026 22:58 IDT] לבדוק מקור יחיד, כמה מקורות יחד, mask ושינוי priority.
 
 ### תעדוף בסיסי ללא UART
 
@@ -496,13 +541,13 @@
 
 מטרה: להוסיף לליבת single-cycle פרוטוקול פנימי רב-מחזורי בלי לשבור ביצוע רגיל.
 
-- [ ] להגדיר GIE בביט `gp[0]` ואת התנהגות enable/disable.
-- [ ] לממש FSM כניסה לפסיקה בשני מחזורים.
-- [ ] במחזור הראשון: לנקות GIE, להפעיל `INTA` וללכוד `TYPE` מה-data bus.
-- [ ] במחזור השני: לשמור `PC+4` ב-`tp` ולקפוץ דרך vector table.
-- [ ] למנוע write-back, memory write או PC advance לא מכוונים בזמן ה-FSM.
-- [ ] לזהות `jalr zero, 0(tp)` כ-`reti` ולהחזיר GIE ל-1.
-- [ ] לבדוק שהחזרה היא בדיוק לפקודה שאחרי הפקודה שנקטעה.
+- [~ | 17.08.2026 22:58 IDT] להגדיר GIE בביט `gp[0]` ואת התנהגות enable/disable.
+- [~ | 17.08.2026 22:58 IDT] לממש FSM כניסה לפסיקה בשני מחזורים.
+- [~ | 17.08.2026 22:58 IDT] במחזור הראשון: לנקות GIE, להפעיל `INTA` וללכוד `TYPE` מה-data bus.
+- [~ | 17.08.2026 22:58 IDT] במחזור השני: לשמור `PC+4` ב-`tp` ולקפוץ דרך vector table.
+- [~ | 17.08.2026 22:58 IDT] למנוע write-back, memory write או PC advance לא מכוונים בזמן ה-FSM.
+- [~ | 17.08.2026 22:58 IDT] לזהות `jalr zero, 0(tp)` כ-`reti` ולהחזיר GIE ל-1.
+- [~ | 17.08.2026 22:58 IDT] לבדוק שהחזרה היא בדיוק לפקודה שאחרי הפקודה שנקטעה.
 - [ ] לבדוק פסיקה בזמן load, store, branch, jump, multiply ו-divider wait.
 
 שער יציאה: ISR נכנס וחוזר באופן דטרמיניסטי, ללא איבוד או ביצוע כפול של פקודות.
@@ -527,14 +572,16 @@
 
 מטרה: להשלים את שלד Quartus שנוצר בשלב 1 ולהעביר את המימוש המאומת ל-FPGA.
 
-- [ ] לעדכן את פרויקט Quartus של `RV32IMscMCU` בכל קובצי המימוש הסופיים.
-- [ ] לבחור את רכיב ה-Cyclone V המדויק של DE10-Standard לפי קובץ הכרטיס.
-- [ ] להגדיר את הישות המבנית העליונה כ-Top-Level Entity.
-- [ ] להוסיף את כל קובצי ה-VHDL בסדר תקין.
-- [ ] ליצור `.qsf` עם pin assignments עבור `CLOCK_50`, `KEY`, `SW`, `LEDR`, `HEX` ו-GPIO נדרש.
-- [ ] ליצור/לעדכן `.sdc` עם clocks ו-clock constraints נכונים.
-- [ ] להגדיר PLL ו-`DIVCLK` ולוודא clock relationships.
-- [ ] לקמפל ללא errors ולסקור warnings משמעותיים.
+- [x | 17.08.2026 22:58 IDT] לעדכן את פרויקט Quartus של `RV32IMscMCU` בכל קובצי המימוש הנוכחיים;
+  יש לחזור על הבדיקה לאחר שלב 8.
+- [x | 17.08.2026 22:43 IDT] לבחור את רכיב ה-Cyclone V המדויק של DE10-Standard לפי קובץ הכרטיס.
+- [x | 17.08.2026 22:43 IDT] להגדיר את הישות המבנית העליונה כ-Top-Level Entity.
+- [x | 17.08.2026 22:43 IDT] להוסיף את כל קובצי ה-VHDL בסדר תקין.
+- [x | 17.08.2026 22:43 IDT] ליצור `.qsf` עם pin assignments עבור `CLOCK_50`, `KEY`, `SW`, `LEDR`, `HEX` ו-GPIO נדרש.
+- [x | 17.08.2026 22:56 IDT] ליצור/לעדכן `.sdc` עם clocks ו-clock constraints נכונים.
+- [x | 17.08.2026 22:56 IDT] להגדיר PLL ו-`DIVCLK` ולוודא clock relationships.
+- [x | 17.08.2026 22:56 IDT] לקמפל ללא errors ולסקור warnings משמעותיים עבור המימוש הנוכחי;
+  יש לחזור על Full Compilation לאחר שלב 8.
 - [ ] להפיק `.sof` ולבדוק reset, GPIO, timer ופסיקות על הכרטיס.
 
 שער יציאה: ה-SOF נטען והמערכת מבצעת את תרחיש ההדגמה על DE10-Standard.
@@ -601,10 +648,10 @@ Quartus/
 | RV32IM baseline | קיים חלקית | נדרש | RV32IM test1 | בהמשך |
 | GPIO | נדרש | נדרש | GPIO test0-test2 | חובה |
 | Divider | נדרש | נדרש | RV32IM/div tests | מומלץ |
-| Basic Timer | עבר אוטומטית; GUI ממתין | עבר אוטומטית; GUI ממתין | interrupt tests | חובה |
-| Pushbuttons | עבר אוטומטית; GUI ממתין | עבר אוטומטית; GUI ממתין | interrupt tests | חובה |
-| Interrupt Controller | נדרש | נדרש | interrupt test1-test3 | חובה |
-| CPU interrupt FSM | נדרש | נדרש | interrupt test1-test3 | חובה |
+| Basic Timer | עבר | עבר | interrupt tests | חובה |
+| Pushbuttons | עבר | עבר | interrupt tests | חובה |
+| Interrupt Controller | עבר אוטומטית; GUI ממתין | מחובר | interrupt test2 מוכן | חובה |
+| CPU interrupt FSM | מכוסה באינטגרציה | עבר אוטומטית; GUI ממתין | interrupt test2 עבר אוטומטית | חובה |
 
 ## סיכונים ונושאים שדורשים תשומת לב
 

@@ -10,6 +10,7 @@ mcu_interconnect.vhd
 gpio_peripheral.vhd
 basic_timer.vhd
 pushbutton_unit.vhd
+interrupt_controller.vhd
 mcu_peripherals.vhd
 CONTROL.VHD
 DMEMORY.VHD

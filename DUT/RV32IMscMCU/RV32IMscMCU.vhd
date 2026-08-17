@@ -21,8 +21,11 @@ end entity;
 architecture structural of RV32IMscMCU is
     signal sysclk_w, pll_locked_w, reset_w : std_logic;
 
-    signal cpu_addr_w, cpu_wdata_w, cpu_rdata_w : std_logic_vector(31 downto 0);
+    signal cpu_addr_w, cpu_wdata_w, cpu_rdata_w, bus_rdata_w : std_logic_vector(31 downto 0);
     signal cpu_read_w, cpu_write_w : std_logic;
+    signal intr_w, inta_w, gie_w, irq_active_w : std_logic;
+    signal interrupt_type_w, interrupt_ie_w, interrupt_ifg_w : std_logic_vector(7 downto 0);
+    signal cpu_irq_type_w : std_logic_vector(7 downto 0);
 
     signal dtcm_addr_w : std_logic_vector(G_ADDRWIDTH-1 downto 0);
     signal dtcm_wdata_w, dtcm_rdata_w : std_logic_vector(31 downto 0);
@@ -40,8 +43,11 @@ architecture structural of RV32IMscMCU is
     attribute keep of cpu_read_w, cpu_write_w, unmapped_w : signal is true;
     attribute keep of timer_event_w, key_event_w : signal is true;
     attribute keep of timer_count_w, timer_capture_w : signal is true;
+    attribute keep of intr_w, inta_w, gie_w, irq_active_w : signal is true;
+    attribute keep of interrupt_type_w, interrupt_ie_w, interrupt_ifg_w : signal is true;
 begin
-    -- The core runs at 25 MHz and the iterative divider at the board's 50 MHz
+    -- The core runs at 20 MHz and the iterative divider at the board's 50 MHz.
+    -- 20 MHz meets the falling-edge DTCM timing and matches benchmark constants.
     -- oscillator.  The CDC handshake in divider_accelerator separates domains.
     clock_pll : entity work.PLL
         port map (
@@ -64,18 +70,22 @@ begin
             MA_WIDTH         => G_MA_WIDTH,
             DATA_WORDS_NUM   => G_DATA_WORDSNUM,
             CLK_CNT_WIDTH    => 16,
-            ITCM_INIT_FILE   => "ITCM.hex",
+            -- Board smoke-test image for the stage-5.5 lab procedure.
+            ITCM_INIT_FILE   => "ITCM_stage5_5.hex",
             DTCM_INIT_FILE   => "DTCM.hex"
         )
         port map (
             rst_i            => reset_w,
             clk_i            => sysclk_w,
             divclk_i         => CLOCK_50,
+            intr_i           => intr_w,
             dbus_rdata_i     => cpu_rdata_w,
             dbus_addr_o      => cpu_addr_w,
             dbus_wdata_o     => cpu_wdata_w,
             dbus_read_o      => cpu_read_w,
             dbus_write_o     => cpu_write_w,
+            inta_o           => inta_w,
+            gie_o            => gie_w,
             pc_o             => open,
             instruction_o    => open,
             RegWrite_ctrl_o  => open,
@@ -92,8 +102,15 @@ begin
             div_busy_o       => open,
             div_done_o       => open,
             div_result_o     => open,
+            irq_active_o     => irq_active_w,
+            irq_type_o       => cpu_irq_type_w,
             mclk_cnt_o       => open
         );
+
+    -- During INTA the controller places TYPE directly on the CPU data bus;
+    -- no address-bus transaction is used in the capture cycle.
+    cpu_rdata_w <= (31 downto 8 => '0') & interrupt_type_w when inta_w = '1'
+                   else bus_rdata_w;
 
     bus_fabric : entity work.mcu_interconnect
         generic map (DTCM_ADDR_WIDTH => G_ADDRWIDTH)
@@ -102,7 +119,7 @@ begin
             cpu_wdata_i  => cpu_wdata_w,
             cpu_read_i   => cpu_read_w,
             cpu_write_i  => cpu_write_w,
-            cpu_rdata_o  => cpu_rdata_w,
+            cpu_rdata_o  => bus_rdata_w,
             dtcm_addr_o  => dtcm_addr_w,
             dtcm_wdata_o => dtcm_wdata_w,
             dtcm_read_o  => dtcm_read_w,
@@ -148,6 +165,8 @@ begin
             keys_n_i     => KEY(3 downto 1),
             capin1_i     => SW(8),
             capin2_i     => SW(9),
+            gie_i        => gie_w,
+            inta_i       => inta_w,
             ledr_o       => gpio_ledr_w,
             hex0_o       => HEX0,
             hex1_o       => HEX1,
@@ -160,7 +179,11 @@ begin
             key_event_o   => key_event_w,
             button_state_o => button_state_w,
             timer_count_o   => timer_count_w,
-            timer_capture_o => timer_capture_w
+            timer_capture_o => timer_capture_w,
+            intr_o           => intr_w,
+            interrupt_type_o => interrupt_type_w,
+            interrupt_ie_o   => interrupt_ie_w,
+            interrupt_ifg_o  => interrupt_ifg_w
         );
 
     LEDR(7 downto 0) <= gpio_ledr_w;

@@ -6,6 +6,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
+use ieee.numeric_std.all;
 
 use work.cond_compilation_package.all;
 use work.const_package.all;
@@ -28,12 +29,15 @@ entity RV32I_CORE is
         rst_i    : in std_logic;
         clk_i    : in std_logic;
         divclk_i : in std_logic;
+        intr_i   : in std_logic;
 
         dbus_rdata_i : in  std_logic_vector(DATA_BUS_WIDTH-1 downto 0);
         dbus_addr_o  : out std_logic_vector(DATA_BUS_WIDTH-1 downto 0);
         dbus_wdata_o : out std_logic_vector(DATA_BUS_WIDTH-1 downto 0);
         dbus_read_o  : out std_logic;
         dbus_write_o : out std_logic;
+        inta_o       : out std_logic;
+        gie_o        : out std_logic;
 
         pc_o          : out std_logic_vector(PC_WIDTH-1 downto 0);
         instruction_o : out std_logic_vector(DATA_BUS_WIDTH-1 downto 0);
@@ -51,6 +55,8 @@ entity RV32I_CORE is
         div_busy_o     : out std_logic;
         div_done_o     : out std_logic;
         div_result_o   : out std_logic_vector(DATA_BUS_WIDTH-1 downto 0);
+        irq_active_o   : out std_logic;
+        irq_type_o     : out std_logic_vector(7 downto 0);
         mclk_cnt_o     : out std_logic_vector(CLK_CNT_WIDTH-1 downto 0)
     );
 end entity;
@@ -78,6 +84,18 @@ architecture structure of RV32I_CORE is
     signal div_result_w : std_logic_vector(31 downto 0);
     signal divider_hold_w : std_logic;
 
+    type irq_state_t is (IRQ_IDLE, IRQ_CAPTURE_TYPE, IRQ_VECTOR_FETCH);
+    signal irq_state_q : irq_state_t := IRQ_IDLE;
+    signal irq_accept_w, interrupt_hold_w, irq_vector_load_w : std_logic;
+    signal irq_return_w, gie_w : std_logic;
+    signal irq_type_q : std_logic_vector(7 downto 0) := (others => '0');
+    signal irq_vector_pc_w : std_logic_vector(PC_WIDTH-1 downto 0);
+    signal irq_resume_pc_w, tp_w : std_logic_vector(DATA_BUS_WIDTH-1 downto 0);
+    signal mem_write_effective_w, mem_read_effective_w : std_logic;
+
+    constant C_INTERRUPT_TEXT_BASE : std_logic_vector(PC_WIDTH-1 downto 0) :=
+        std_logic_vector(to_unsigned(16#3000# mod (2 ** PC_WIDTH), PC_WIDTH));
+
     signal mclk_cnt_q : std_logic_vector(CLK_CNT_WIDTH-1 downto 0) := (others => '0');
 
     attribute keep : boolean;
@@ -85,6 +103,8 @@ architecture structure of RV32I_CORE is
     attribute keep of execute_result_w, reg_write_effective_w, mem_write_w : signal is true;
     attribute keep of mem_read_w, branch_w, branch_taken_w, mul_op_w : signal is true;
     attribute keep of div_busy_w, div_done_w, div_result_w, divider_hold_w : signal is true;
+    attribute keep of irq_accept_w, interrupt_hold_w, irq_vector_load_w : signal is true;
+    attribute keep of irq_type_q, gie_w : signal is true;
 begin
     fetch_unit : entity work.Ifetch
         generic map (
@@ -99,6 +119,9 @@ begin
             clk_i         => clk_i,
             rst_i         => rst_i,
             divider_hold_i => divider_hold_w,
+            interrupt_hold_i => interrupt_hold_w,
+            interrupt_vector_load_i => irq_vector_load_w,
+            interrupt_vector_i => irq_vector_pc_w,
             addr_gen_i    => addr_gen_w,
             Branch_ctrl_i => branch_w,
             brTaken_i     => branch_taken_w,
@@ -122,9 +145,15 @@ begin
             RegDst_ctrl_i  => reg_dst_w,
             RegWrite_ctrl_i=> reg_write_effective_w,
             MemtoReg_ctrl_i=> mem_to_reg_w,
+            irq_enter_i    => irq_accept_w,
+            irq_return_i   => irq_return_w,
+            irq_save_return_i => irq_vector_load_w,
+            irq_resume_pc_i => irq_resume_pc_w,
             read_data1_o   => read_data1_w,
             read_data2_o   => read_data2_w,
-            SignExt_o      => sign_extend_w
+            SignExt_o      => sign_extend_w,
+            gie_o          => gie_w,
+            tp_o           => tp_w
         );
 
     control_unit : entity work.control
@@ -179,10 +208,47 @@ begin
     -- Keep the divider instruction visible through the clock edge that writes
     -- its result. div_retired_q releases fetch only after that edge and also
     -- prevents the still-visible instruction from launching a second request.
-    div_start_w       <= div_instruction_w and not div_active_q and not div_retired_q;
-    divider_hold_w    <= div_instruction_w and not div_retired_q;
+    div_start_w       <= div_instruction_w and not div_active_q and not div_retired_q
+                         when irq_state_q = IRQ_IDLE else '0';
+    divider_hold_w    <= div_instruction_w and not div_retired_q
+                         when irq_state_q = IRQ_IDLE else '0';
     writeback_result_w <= div_result_w when div_instruction_w = '1' else execute_result_w;
-    reg_write_effective_w <= reg_write_control_w when div_instruction_w = '0' else div_done_w;
+    reg_write_effective_w <= '0' when irq_state_q /= IRQ_IDLE else
+                             reg_write_control_w when div_instruction_w = '0' else
+                             div_done_w;
+
+    irq_accept_w <= '1' when irq_state_q = IRQ_IDLE and intr_i = '1' and
+                                 gie_w = '1' and divider_hold_w = '0' else '0';
+    interrupt_hold_w <= '0' when irq_state_q = IRQ_IDLE else '1';
+    irq_vector_load_w <= '1' when irq_state_q = IRQ_VECTOR_FETCH else '0';
+    irq_return_w <= '1' when irq_state_q = IRQ_IDLE and
+                               instruction_w = x"00020067" else '0';
+    irq_resume_pc_w <= (DATA_BUS_WIDTH-1 downto PC_WIDTH => '0') & pc_w;
+
+    -- Interrupt applications are linked at virtual text base 0x3000 while the
+    -- on-chip ITCM starts at physical PC zero. Translate the loaded vector to
+    -- the ITCM-local PC used by this core.
+    irq_vector_pc_w <= dbus_rdata_i(PC_WIDTH-1 downto 0) - C_INTERRUPT_TEXT_BASE;
+
+    process (clk_i, rst_i)
+    begin
+        if rst_i = '1' then
+            irq_state_q <= IRQ_IDLE;
+            irq_type_q <= (others => '0');
+        elsif rising_edge(clk_i) then
+            case irq_state_q is
+                when IRQ_IDLE =>
+                    if irq_accept_w = '1' then
+                        irq_state_q <= IRQ_CAPTURE_TYPE;
+                    end if;
+                when IRQ_CAPTURE_TYPE =>
+                    irq_type_q <= dbus_rdata_i(7 downto 0);
+                    irq_state_q <= IRQ_VECTOR_FETCH;
+                when IRQ_VECTOR_FETCH =>
+                    irq_state_q <= IRQ_IDLE;
+            end case;
+        end if;
+    end process;
 
     process (clk_i, rst_i)
     begin
@@ -216,15 +282,21 @@ begin
 
     -- Full byte address leaves the core.  Address truncation happens only at
     -- the DTCM boundary inside mcu_interconnect.
-    dbus_addr_o  <= execute_result_w;
+    dbus_addr_o  <= (DATA_BUS_WIDTH-1 downto 8 => '0') & irq_type_q
+                    when irq_state_q = IRQ_VECTOR_FETCH else execute_result_w;
     dbus_wdata_o <= read_data2_w;
-    dbus_read_o  <= mem_read_w;
-    dbus_write_o <= mem_write_w;
+    mem_read_effective_w <= '1' when irq_state_q = IRQ_VECTOR_FETCH else
+                            mem_read_w when irq_state_q = IRQ_IDLE else '0';
+    mem_write_effective_w <= mem_write_w when irq_state_q = IRQ_IDLE else '0';
+    dbus_read_o  <= mem_read_effective_w;
+    dbus_write_o <= mem_write_effective_w;
+    inta_o <= '1' when irq_state_q = IRQ_CAPTURE_TYPE else '0';
+    gie_o <= gie_w;
 
     pc_o              <= pc_w;
     instruction_o     <= instruction_w;
     RegWrite_ctrl_o   <= reg_write_effective_w;
-    MemWrite_ctrl_o   <= mem_write_w;
+    MemWrite_ctrl_o   <= mem_write_effective_w;
     Branch_ctrl_o     <= branch_w;
     read_data1_o      <= read_data1_w;
     read_data2_o      <= read_data2_w;
@@ -237,5 +309,7 @@ begin
     div_busy_o        <= div_busy_w;
     div_done_o        <= div_done_w;
     div_result_o      <= div_result_w;
+    irq_active_o      <= interrupt_hold_w;
+    irq_type_o        <= irq_type_q;
     mclk_cnt_o        <= mclk_cnt_q;
 end architecture;

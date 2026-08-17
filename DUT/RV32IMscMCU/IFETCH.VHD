@@ -26,6 +26,9 @@ ENTITY Ifetch IS
 		clk_i				: IN 	STD_LOGIC;
 		rst_i 				: IN 	STD_LOGIC;
 		divider_hold_i      : IN    STD_LOGIC;
+		interrupt_hold_i    : IN    STD_LOGIC;
+		interrupt_vector_load_i : IN STD_LOGIC;
+		interrupt_vector_i  : IN    STD_LOGIC_VECTOR(PC_WIDTH-1 DOWNTO 0);
 		addr_gen_i 			: IN 	STD_LOGIC_VECTOR(PC_WIDTH-1 DOWNTO 0);
 		Branch_ctrl_i		: IN 	STD_LOGIC;
 		brTaken_i 			: IN 	STD_LOGIC;
@@ -92,6 +95,7 @@ END PROCESS;
 	brTaken_w <= 	Branch_ctrl_i AND brTaken_i;
 	
 	next_pc_w	<=	(others => '0') 								WHEN	rst_q 					ELSE
+								interrupt_vector_i					WHEN	interrupt_vector_load_i ELSE
 								alu_res_i(PC_WIDTH-1 DOWNTO 0)		WHEN	Jalr_ctrl_i				ELSE	-- case of jalr
 								addr_gen_i(PC_WIDTH-1 DOWNTO 0)		WHEN	brTaken_w or Jal_ctrl_i ELSE	-- case of Branch Taken or jal 
 								pc_plus4_q(PC_WIDTH-1 DOWNTO 0);											-- case of Branch Not-Taken 				
@@ -103,7 +107,8 @@ PROCESS (clk_i, rst_i)
 		IF rst_i = '1' THEN
 			pc_plus4_q(PC_WIDTH-1 DOWNTO 0) <= (OTHERS => '0') ; 
 		ELSIF(clk_i'EVENT  AND clk_i='1') THEN
-			IF divider_hold_i = '0' THEN
+			IF divider_hold_i = '0' AND
+			   (interrupt_hold_i = '0' OR interrupt_vector_load_i = '1') THEN
 				pc_plus4_q(PC_WIDTH-1 DOWNTO 0) <= pc_plus4_r;
 			END IF;
 		END IF;
@@ -117,7 +122,8 @@ PROCESS (clk_i, rst_i)
 		IF rst_i = '1' THEN
 			pc_q(PC_WIDTH-1 DOWNTO 0) <= (OTHERS => '0') ; 
 		ELSIF(clk_i'EVENT  AND clk_i='1') THEN
-			IF divider_hold_i = '0' THEN
+			IF divider_hold_i = '0' AND
+			   (interrupt_hold_i = '0' OR interrupt_vector_load_i = '1') THEN
 				pc_q(PC_WIDTH-1 DOWNTO 0) <= next_pc_w;
 			END IF;
 		END IF;
@@ -131,10 +137,15 @@ END PROCESS;
 		-- multi-cycle divider holds the core, next_pc_w already points past the
 		-- held PC. Select pc_q during divider_hold_i so the DIV/REM instruction
 		-- remains on the decode/execute path until it is explicitly retired.
-		itcm_addr_w <= pc_q(PC_WIDTH-1 DOWNTO 2) WHEN divider_hold_i = '1' ELSE
+		itcm_addr_w <= interrupt_vector_i(PC_WIDTH-1 DOWNTO 2)
+		                 WHEN interrupt_vector_load_i = '1' ELSE
+		               pc_q(PC_WIDTH-1 DOWNTO 2)
+		                 WHEN divider_hold_i = '1' OR interrupt_hold_i = '1' ELSE
 		               next_pc_w(PC_WIDTH-1 DOWNTO 2);
 	elsif (WORD_GRANULARITY = False) generate 	-- i.e. each BYTE has unike address
-		itcm_addr_w <= pc_q WHEN divider_hold_i = '1' ELSE next_pc_w;
+		itcm_addr_w <= interrupt_vector_i WHEN interrupt_vector_load_i = '1' ELSE
+		               pc_q WHEN divider_hold_i = '1' OR interrupt_hold_i = '1' ELSE
+		               next_pc_w;
 	end generate;
 ---------------------------------------------------------------------------------------
 	pc_o 		<= 	pc_q;

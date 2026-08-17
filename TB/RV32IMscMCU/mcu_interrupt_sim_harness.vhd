@@ -3,34 +3,41 @@ use ieee.std_logic_1164.all;
 
 use work.cond_compilation_package.all;
 
-entity mcu_sim_harness is
+-- Simulation-only MCU wrapper that exposes the interrupt protocol while using
+-- the same CPU, interconnect, DTCM and peripheral instances as the FPGA top.
+entity mcu_interrupt_sim_harness is
     generic (
         ITCM_INIT_FILE : string := "ITCM.hex";
-        DTCM_INIT_FILE : string := "DTCM.hex"
+        DTCM_INIT_FILE : string := "DTCM.hex";
+        PB_DEBOUNCE_CYCLES : positive := 2
     );
     port (
         sys_clk_i : in std_logic;
         div_clk_i : in std_logic;
         reset_i   : in std_logic;
         switches_i : in std_logic_vector(7 downto 0);
+        keys_n_i   : in std_logic_vector(2 downto 0);
+        capin1_i, capin2_i : in std_logic;
+
         ledr_o : out std_logic_vector(7 downto 0);
         hex0_o, hex1_o, hex2_o, hex3_o, hex4_o, hex5_o : out std_logic_vector(6 downto 0);
+        pwm_o : out std_logic;
         pc_o : out std_logic_vector(G_PC_WIDTH-1 downto 0);
         instruction_o : out std_logic_vector(31 downto 0);
-        regwrite_o, memwrite_o : out std_logic;
-        read_data1_o, read_data2_o, alu_result_o : out std_logic_vector(31 downto 0);
         bus_addr_o, bus_wdata_o : out std_logic_vector(31 downto 0);
         bus_read_o, bus_write_o : out std_logic;
         div_busy_o, div_done_o : out std_logic;
-        div_result_o : out std_logic_vector(31 downto 0)
+        intr_o, inta_o, gie_o, irq_active_o : out std_logic;
+        irq_type_o : out std_logic_vector(7 downto 0);
+        interrupt_ie_o, interrupt_ifg_o : out std_logic_vector(7 downto 0)
     );
 end entity;
 
-architecture sim of mcu_sim_harness is
+architecture sim of mcu_interrupt_sim_harness is
     signal cpu_addr_w, cpu_wdata_w, cpu_rdata_w, bus_rdata_w : std_logic_vector(31 downto 0);
     signal cpu_read_w, cpu_write_w : std_logic;
-    signal intr_w, inta_w, gie_w : std_logic;
-    signal interrupt_type_w : std_logic_vector(7 downto 0);
+    signal intr_w, inta_w, gie_w, irq_active_w : std_logic;
+    signal interrupt_type_w, cpu_irq_type_w : std_logic_vector(7 downto 0);
     signal dtcm_addr_w : std_logic_vector(G_ADDRWIDTH-1 downto 0);
     signal dtcm_wdata_w, dtcm_rdata_w : std_logic_vector(31 downto 0);
     signal dtcm_read_w, dtcm_write_w : std_logic;
@@ -58,16 +65,18 @@ begin
             dbus_write_o => cpu_write_w,
             inta_o => inta_w, gie_o => gie_w,
             pc_o => pc_o, instruction_o => instruction_o,
-            RegWrite_ctrl_o => regwrite_o, MemWrite_ctrl_o => memwrite_o,
-            Branch_ctrl_o => open, read_data1_o => read_data1_o,
-            read_data2_o => read_data2_o, write_data_o => open,
-            alu_res_o => alu_result_o, brTaken_o => open,
+            RegWrite_ctrl_o => open, MemWrite_ctrl_o => open,
+            Branch_ctrl_o => open, read_data1_o => open,
+            read_data2_o => open, write_data_o => open,
+            alu_res_o => open, brTaken_o => open,
             dtcm_addr_o => open, dtcm_data_wr_o => open, dtcm_data_rd_o => open,
             div_busy_o => div_busy_o, div_done_o => div_done_o,
-            div_result_o => div_result_o, irq_active_o => open,
-            irq_type_o => open, mclk_cnt_o => open
+            div_result_o => open, irq_active_o => irq_active_w,
+            irq_type_o => cpu_irq_type_w, mclk_cnt_o => open
         );
 
+    -- During INTA the interrupt controller owns the CPU read-data input and
+    -- presents TYPE. In the vector-fetch cycle the regular fabric reads DTCM.
     cpu_rdata_w <= (31 downto 8 => '0') & interrupt_type_w when inta_w = '1'
                    else bus_rdata_w;
 
@@ -99,28 +108,31 @@ begin
         );
 
     peripherals : entity work.mcu_peripherals
-        generic map (
-            PB_DEBOUNCE_CYCLES => 2
-        )
+        generic map (PB_DEBOUNCE_CYCLES => PB_DEBOUNCE_CYCLES)
         port map (
             clk_i => sys_clk_i, reset_i => reset_i,
             address_i => mmio_addr_w, write_data_i => mmio_wdata_w,
             read_i => mmio_read_w, write_i => mmio_write_w,
             read_data_o => mmio_rdata_w, hit_o => mmio_hit_w,
             switches_i => switches_i, ledr_o => ledr_o,
-            keys_n_i => (others => '1'), capin1_i => '0', capin2_i => '0',
+            keys_n_i => keys_n_i, capin1_i => capin1_i, capin2_i => capin2_i,
             gie_i => gie_w, inta_i => inta_w,
             hex0_o => hex0_o, hex1_o => hex1_o, hex2_o => hex2_o,
             hex3_o => hex3_o, hex4_o => hex4_o, hex5_o => hex5_o,
-            pwm_o => open, timer_event_o => open, key_event_o => open,
+            pwm_o => pwm_o, timer_event_o => open, key_event_o => open,
             button_state_o => open, timer_count_o => open,
             timer_capture_o => open, intr_o => intr_w,
             interrupt_type_o => interrupt_type_w,
-            interrupt_ie_o => open, interrupt_ifg_o => open
+            interrupt_ie_o => interrupt_ie_o, interrupt_ifg_o => interrupt_ifg_o
         );
 
     bus_addr_o  <= cpu_addr_w;
     bus_wdata_o <= cpu_wdata_w;
     bus_read_o  <= cpu_read_w;
     bus_write_o <= cpu_write_w;
+    intr_o <= intr_w;
+    inta_o <= inta_w;
+    gie_o <= gie_w;
+    irq_active_o <= irq_active_w;
+    irq_type_o <= cpu_irq_type_w;
 end architecture;

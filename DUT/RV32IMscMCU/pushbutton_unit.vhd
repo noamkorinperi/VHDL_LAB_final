@@ -8,7 +8,7 @@ use work.mcu_memory_map_pkg.all;
 -- sysclk edges. Software reads active-high pressed states at PORT_PB[2:0].
 entity pushbutton_unit is
     generic (
-        DEBOUNCE_CYCLES : positive := 250000
+        DEBOUNCE_CYCLES : positive := 200000
     );
     port (
         clk_i       : in  std_logic;

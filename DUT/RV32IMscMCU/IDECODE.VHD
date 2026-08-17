@@ -27,11 +27,17 @@ ENTITY Idecode IS
 		RegDst_ctrl_i 	: IN 	STD_LOGIC;
 		RegWrite_ctrl_i : IN 	STD_LOGIC;
 		MemtoReg_ctrl_i : IN 	STD_LOGIC;
+		irq_enter_i     : IN    STD_LOGIC;
+		irq_return_i    : IN    STD_LOGIC;
+		irq_save_return_i : IN  STD_LOGIC;
+		irq_resume_pc_i : IN    STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
 		
 		--Outputs
 		read_data1_o	: OUT	STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
 		read_data2_o	: OUT 	STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
-		SignExt_o 		: OUT 	STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0)		 
+		SignExt_o 		: OUT 	STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
+		gie_o           : OUT   STD_LOGIC;
+		tp_o            : OUT   STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0)
 	);
 END Idecode;
 
@@ -136,10 +142,23 @@ BEGIN
 				RF_q(CONV_INTEGER(rd_w)) <= write_data_w;
 				-- index type is integer so we must use conv_integer for type casting
 			end if;
+
+			-- The project specification assigns GIE to gp[0] (x3 bit 0)
+			-- and the interrupt return address to tp (x4).
+			if irq_enter_i = '1' then
+				RF_q(3)(0) <= '0';
+			elsif irq_return_i = '1' then
+				RF_q(3)(0) <= '1';
+			end if;
+			if irq_save_return_i = '1' then
+				RF_q(4) <= irq_resume_pc_i;
+			end if;
 		end if;
 	end process;
 
-END behavior;
+	gie_o <= RF_q(3)(0);
+	tp_o <= RF_q(4);
 
+END behavior;
 
 

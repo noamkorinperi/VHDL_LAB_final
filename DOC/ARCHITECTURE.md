@@ -92,11 +92,11 @@ The canonical VHDL constants are in `mcu_memory_map_pkg.vhd`.
 | Domain | Source | Purpose |
 |---|---|---|
 | `CLOCK_50` | DE10-Standard 50 MHz oscillator | Board reference clock |
-| `sysclk` | Cyclone V PLL output, initially 25 MHz | CPU, DTCM, GPIO, timer and interrupt controller |
+| `sysclk` | Cyclone V PLL output, 20 MHz | CPU, DTCM, GPIO, timer and interrupt controller |
 | `DIVCLK` | 50 MHz clock derived/qualified by the clock unit | Divider's 32-cycle iterative datapath |
 
-The generated `PLL.vhd` targets Cyclone V and currently divides `CLOCK_50` by
-two for the 25 MHz `sysclk`. The divider accelerator retains the 50 MHz board
+The generated `PLL.vhd` targets Cyclone V and currently multiplies by two and
+divides by five for the 20 MHz `sysclk`. The divider accelerator retains the 50 MHz board
 clock and crosses to/from `sysclk` with its request/completion handshake.
 
 No fabric-generated clock may be used as a clock input.  Clock selection in the
@@ -147,7 +147,7 @@ cycle 2.  `jalr zero, 0(tp)` acts as `reti` and restores GIE.
 | `mcu_interconnect.vhd` | DTCM/MMIO select and read mux, phase 2 |
 | `gpio_peripheral.vhd` | LED/HEX/SW registers and seven-segment encoding, phase 2 |
 | `divider.vhd` | Iterative unsigned core, phase 3 |
-| `PLL.vhd` | Cyclone V 50-to-25 MHz PLL and lock indication |
+| `PLL.vhd` | Cyclone V 50-to-20 MHz PLL and lock indication |
 | `basic_timer.vhd` | Timer, compare, PWM and capture, phase 4 |
 | `pushbutton_unit.vhd` | Synchronization, debounce and event detection, phase 5 |
 | `interrupt_controller.vhd` | IE, IFG, TYPE and priority, phase 6 |
@@ -167,7 +167,7 @@ and synchronized capture inputs can latch rising or falling edges. Timer and
 button events are one-`sysclk` pulses prepared for the stage-6 controller.
 
 The pushbutton unit treats the board keys as active-low, synchronizes each input
-with two flip-flops, debounces it for 250,000 `sysclk` cycles (10 ms at 25 MHz),
+with two flip-flops, debounces it for 200,000 `sysclk` cycles (10 ms at 20 MHz),
 and emits one press event per stable press. `PORT_PB[2:0]` returns active-high
 pressed states for KEY1, KEY2 and KEY3 respectively.
 
