@@ -42,5 +42,5 @@
 
 .eqv reti									jalr zero,0(tp)
 
-.eqv SEC_PERIOD			  		0x01312D00			# in case of SMCLK=20MHz
+.eqv SEC_PERIOD			  		0x002625A0			# in case of SMCLK=20MHz(the BT timer source is SMCLK/8)
 

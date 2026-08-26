@@ -1,6 +1,6 @@
 # תוכנית עבודה ומעקב - RV32IM MCU על DE10-Standard
 
-עודכן לאחרונה: 17.08.2026 23:07 IDT - רגרסיית 13 הבדיקות עברה
+עודכן לאחרונה: 26.08.2026 20:02 IDT - אימות release מלא לשלבים 0–9
 
 מסמך זה הוא מקור המעקב השוטף של הפרויקט. מעדכנים אותו בכל מעבר שלב, לאחר בדיקה שעברה, וכאשר מתגלה חסם או שינוי בדרישות.
 
@@ -10,12 +10,12 @@
 |---|---|
 | כרטיס יעד | DE10-Standard |
 | ארכיטקטורת חובה | RV32IM single-cycle MCU |
-| זמן עדכון אחרון | 17.08.2026 23:07 IDT |
-| שלב נוכחי | שלב 5.5 מוכן למעבדה; שלבים 6–7 מוכנים לבדיקות ModelSim GUI |
-| הושלם | שלבים 0–5 עם ראיות GUI; מימוש אוטומטי של Interrupt Controller וכניסה/יציאה מפסיקה |
-| הפעולה הבאה | במעבדה לבצע את `DOC/PHYSICAL_LAB_TEST_STAGE5_5.md`, ולאחר מכן את שתי בדיקות שלבים 6–7 |
-| חסם נוכחי | אין; השלמת 5.5 תלויה בגישה פיזית לכרטיס, וסגירת 6–7 תלויה בשמירת ראיות GUI |
-| Quartus | Full Compilation ו-Timing עברו ב-17.08.2026 22:56 IDT; הופק SOF ו-worst setup slack הוא ‎+2.631 ns |
+| זמן עדכון אחרון | 26.08.2026 20:02 IDT |
+| שלב נוכחי | שלב 9 הושלם; השלב הבא הוא SignalTap ו־PPA |
+| הושלם | שלבים 0–9: רגרסיית ModelSim מלאה ואימות פיזי של reset, compare, PWM, DIV ו־REM |
+| הפעולה הבאה | לבצע את שלב 10: לכידות SignalTap ודוחות Area/Fmax/Power |
+| חסם נוכחי | אין |
+| Quartus | Full Compilation עבר ב־26.08.2026 עם 0 errors; worst setup slack ‏+2.664 ns ו־worst hold slack ‏+0.143 ns |
 | בונוסים | Pipeline ו-UART מוקפאים עד השלמת כל דרישות החובה |
 
 ### מקרא מצבים וחותמות זמן
@@ -40,17 +40,39 @@
 | 3 | Divider Accelerator | `DIV/REM` וה-handshake עוברים בדיקות | `[x | 17.08.2026 21:48 IDT]` |
 | 4 | Basic Timer | counter, compare, PWM ו-capture עובדים | `[x | 17.08.2026 22:21 IDT]` |
 | 5 | Pushbuttons | KEY1-KEY3 מסונכרנים, עוברים debounce ומייצרים אירוע יחיד | `[x | 17.08.2026 22:21 IDT]` |
-| 5.5 | בדיקת חומרה מוקדמת | KEY1-KEY3 ו-PWM מודגמים פיזית על DE10-Standard | `[~ | 17.08.2026 22:58 IDT]` |
-| 6 | Interrupt Controller | IE, IFG, TYPE ותעדוף עובדים | `[~ | 17.08.2026 22:58 IDT]` |
-| 7 | פסיקות בתוך ה-CPU | כניסה ל-ISR וחזרה ממנו עובדות לפי הפרוטוקול | `[~ | 17.08.2026 22:58 IDT]` |
-| 8 | אינטגרציה ואימות מלא | benchmarks עוברים מול RARS | `[ ]` |
-| 9 | Quartus ו-DE10-Standard | קומפילציה, pin assignment וקובץ SOF | `[~ | 17.08.2026 22:58 IDT]` |
+| 5.5 | בדיקת חומרה מוקדמת | KEY1-KEY3 ו-PWM מודגמים פיזית על DE10-Standard | `[x | 26.08.2026 19:30 IDT]` |
+| 6 | Interrupt Controller | IE, IFG, TYPE ותעדוף עובדים | `[x | 26.08.2026 19:30 IDT]` |
+| 7 | פסיקות בתוך ה-CPU | כניסה ל-ISR וחזרה ממנו עובדות לפי הפרוטוקול | `[x | 26.08.2026 19:30 IDT]` |
+| 8 | אינטגרציה ואימות מלא | benchmarks עוברים מול RARS | `[x | 25.08.2026 22:18 IDT]` |
+| 9 | Quartus ו-DE10-Standard | קומפילציה, pin assignment וקובץ SOF | `[x | 26.08.2026 19:30 IDT]` |
 | 10 | SignalTap ו-PPA | הוכחת FPGA ודוחות Area/Fmax/Power | `[ ]` |
 | 11 | דוח והגשה | `Final_report.pdf` ו-ZIP נקיים לפי המבנה הנדרש | `[ ]` |
 
 ---
 
 ## יומן ביצוע ושינויים בפועל
+
+### 26.08.2026 20:02 IDT - אימות release לפני העלאה ל־GitHub
+
+- כל 14 סקריפטי ModelSim של שלבים 0–8 הורצו מחדש ועברו עם סמן PASS ייעודי,
+  ללא Failure, ‏Fatal או שגיאת קומפילציה.
+- רגרסיית שלב 8 עברה 9/9 benchmarks, כולל רצפי הטיימר המתוקנים ב־test4.
+- Full Compilation חדש של שלב 9 עבר עם 0 errors והפיק SOF; בכל ארבע פינות
+  TimeQuest התקבל slack חיובי, עם worst setup ‏+2.664 ns ו־worst hold ‏+0.143 ns.
+- כל קובצי Intel HEX עברו בדיקת checksum, ולא נמצאו סודות או קבצים גדולים
+  חריגים בתוכן המיועד ל־commit.
+
+### 26.08.2026 19:30 IDT - אימות פיזי מלא לשלב 9
+
+- רגרסיית ModelSim המלאה עברה 9/9, כולל רצפי KEY1/KEY2/KEY3 והפעלה מחדש
+  של compare mode אחרי מדידות capture.
+- תוקנה קושחת הכרטיס כך ש־`BTCLR` נכתב במעבר ל־PWM ובהפעלה מחדש של compare;
+  בכך נמנע קיפאון כאשר `BTCNT` כבר עבר את ערך ההשוואה החדש.
+- Full Compilation עבר עם 0 errors; worst setup slack ‏+2.664 ns ו־worst hold
+  slack ‏+0.143 ns.
+- ה־SOF נטען בהצלחה לרכיב FPGA מספר 2 בשרשרת `DE-SoC [USB-1]`.
+- `KEY0` reset, ‏`KEY1` compare/count, ‏`KEY2` PWM ו־`KEY3` REM/DIV עברו
+  בדיקה פיזית. לאחר שתי לחיצות KEY3 הספירה חזרה בקצב 0.125 שנייה ללא קיפאון.
 
 ### 17.08.2026 23:07 IDT - רגרסיה מלאה לאחר שלבים 6–7
 
@@ -556,15 +578,15 @@
 
 מטרה: להוכיח שהמערכת השלמה עובדת מול ה-golden model.
 
-- [ ] ליצור `tb_RV32IMscMCU.vhd` מרכזי ובודק-עצמית.
-- [ ] ליצור קובץ `.do` אחיד לקומפילציה, הרצה ו-waveforms.
-- [ ] להריץ את כל ה-basic benchmarks.
-- [ ] להריץ את כל ה-advanced/interrupt benchmarks.
-- [ ] לדמות switches, pushbuttons, capture inputs ושעונים.
-- [ ] להשוות DTCM סופי בין ModelSim לבין RARS.
-- [ ] להוסיף assertions עבור illegal bus overlap, X/U, timeout ופרוטוקולי handshake.
-- [ ] למדוד cycles ו-IPC בשיטה שתוגדר במפורש.
-- [ ] לשמור waveforms מייצגים עבור הדוח.
+- [x | 25.08.2026 22:18 IDT] ליצור `tb_RV32IMscMCU.vhd` מרכזי ובודק-עצמית.
+- [x | 25.08.2026 22:18 IDT] ליצור קובץ `.do` אחיד לקומפילציה, הרצה ו-waveforms.
+- [x | 25.08.2026 22:18 IDT] להריץ את כל ה-basic benchmarks.
+- [x | 25.08.2026 22:18 IDT] להריץ את כל ה-advanced/interrupt benchmarks.
+- [x | 25.08.2026 22:18 IDT] לדמות switches, pushbuttons, capture inputs ושעונים.
+- [x | 25.08.2026 22:18 IDT] להשוות DTCM סופי בין ModelSim לבין RARS.
+- [x | 25.08.2026 22:18 IDT] להוסיף assertions עבור illegal bus overlap, X/U, timeout ופרוטוקולי handshake.
+- [x | 25.08.2026 22:18 IDT] למדוד cycles ו-IPC בשיטה שתוגדר במפורש.
+- [x | 25.08.2026 22:18 IDT] לשמור waveforms מייצגים עבור הדוח.
 
 שער יציאה: כל benchmark מסתיים ללא timeout או assertion failure, והזיכרון הסופי תואם ל-RARS.
 
@@ -572,17 +594,18 @@
 
 מטרה: להשלים את שלד Quartus שנוצר בשלב 1 ולהעביר את המימוש המאומת ל-FPGA.
 
-- [x | 17.08.2026 22:58 IDT] לעדכן את פרויקט Quartus של `RV32IMscMCU` בכל קובצי המימוש הנוכחיים;
-  יש לחזור על הבדיקה לאחר שלב 8.
+- [x | 25.08.2026 22:18 IDT] לעדכן את פרויקט Quartus של `RV32IMscMCU` בכל קובצי המימוש הנוכחיים;
+  נבדק מחדש לאחר שלב 8 עם firmware של interrupt/test4.
 - [x | 17.08.2026 22:43 IDT] לבחור את רכיב ה-Cyclone V המדויק של DE10-Standard לפי קובץ הכרטיס.
 - [x | 17.08.2026 22:43 IDT] להגדיר את הישות המבנית העליונה כ-Top-Level Entity.
 - [x | 17.08.2026 22:43 IDT] להוסיף את כל קובצי ה-VHDL בסדר תקין.
 - [x | 17.08.2026 22:43 IDT] ליצור `.qsf` עם pin assignments עבור `CLOCK_50`, `KEY`, `SW`, `LEDR`, `HEX` ו-GPIO נדרש.
-- [x | 17.08.2026 22:56 IDT] ליצור/לעדכן `.sdc` עם clocks ו-clock constraints נכונים.
+- [x | 25.08.2026 22:18 IDT] ליצור/לעדכן `.sdc` עם clocks, I/O ו-CDC constraints נכונים.
 - [x | 17.08.2026 22:56 IDT] להגדיר PLL ו-`DIVCLK` ולוודא clock relationships.
-- [x | 17.08.2026 22:56 IDT] לקמפל ללא errors ולסקור warnings משמעותיים עבור המימוש הנוכחי;
-  יש לחזור על Full Compilation לאחר שלב 8.
-- [ ] להפיק `.sof` ולבדוק reset, GPIO, timer ופסיקות על הכרטיס.
+- [x | 25.08.2026 22:18 IDT] לקמפל ללא errors ולסקור warnings משמעותיים עבור המימוש הנוכחי;
+  Full Compilation ו-TimeQuest חוזר עברו לאחר שלב 8.
+- [x | 26.08.2026 19:30 IDT] הופק ונטען `.sof` סופי עם interrupt/test4;
+  reset, compare interrupts, PWM ושני מסלולי KEY3 ‏(REM/DIV) עברו אימות פיזי.
 
 שער יציאה: ה-SOF נטען והמערכת מבצעת את תרחיש ההדגמה על DE10-Standard.
 

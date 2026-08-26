@@ -22,37 +22,44 @@
 #--------------------------------------------------------------	
 .text
 main:
-	
-	call sys_init		
-	ori  gp,gp,0x01    						# EINT, GIE=gp[0]=1 
+	call sys_init
 
-		
-FSM_START:
 	la	t3,state
-	lw  fp,0(t3)
+	sw  zero,0(t3)								# state=STATE0
+	mv	fp,zero										# sync of fp and state
 
-STATE0:
+	ori  gp,gp,0x01    						# EINT, GIE=gp[0]=1
+
+
+STATE0:													# idle state
 	li	t0,0
 	bne fp,t0,STATE1
-	call print2HEX10Arr
+	nop
+
 			
 STATE1:
-	li	t0,1
-	bne fp,t0,STATE2
-	call print2HEX32Arr
+	li	 t0,1
+	bne  fp,t0,STATE2
+	call print2HEX10Arr
+	mv   fp,zero									  # goto idle state
+
 	
 STATE2: 
-	li	t0,2
-	bne fp,t0,STATE3
-	call print2HEX54Arr
+	li	 t0,2
+	bne  fp,t0,STATE3
+	call print2HEX32Arr
+	mv   fp,zero									  # goto idle state
+
 	
 STATE3: 
-	li	t0,3
-	bne fp,t0,END
-	call print2LEDsArr
+	li	 t0,3
+	bne  fp,t0,END
+	call print2HEX54Arr
+	mv   fp,zero									  # goto idle state
+
 
 END:	
-	j	FSM_START		    						# infinite loop
+	j	STATE0		    						# infinite loop
 #==============================================================
 #							 						ISRs section
 #==============================================================	
@@ -60,6 +67,7 @@ KEY1_ISR:
 	li		t2,1
 	la		t3,state
 	sw  	t2,0(t3)								# state=1
+	mv		fp,t2										# sync of fp and state
 		
 	li		t2,IFG		
 	lw  	t3,0(t2) 								# read the IFG register
@@ -73,6 +81,7 @@ KEY2_ISR:
 	li		t2,2
 	la		t3,state
 	sw  	t2,0(t3)								# state=2
+	mv		fp,t2										# sync of fp and state
 		
 	li		t2,IFG		
 	lw  	t3,0(t2) 								# read the IFG register
@@ -86,6 +95,7 @@ KEY3_ISR:
 	li		t2,3
 	la		t3,state
 	sw  	t2,0(t3)								# state=3
+	mv		fp,t2										# sync of fp and state
 		
 	li		t2,IFG		
 	lw  	t3,0(t2) 								# read the IFG register
@@ -96,7 +106,11 @@ KEY3_ISR:
 	
 	
 BT_ISR:	
-	addi a0,a0,1  								# $a0=$a0+1
+	addi  a0,a0,1  								# a0=a0+1
+
+	la		t3,state
+	lw  	t2,0(t3)								# restore the current state
+	mv		fp,t2										# sync of fp and the current state
 	reti 													# return from interrupt 
 
 	    

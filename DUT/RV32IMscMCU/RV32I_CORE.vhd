@@ -134,7 +134,11 @@ begin
         );
 
     decode_unit : entity work.Idecode
-        generic map (PC_WIDTH => PC_WIDTH, DATA_BUS_WIDTH => DATA_BUS_WIDTH)
+        generic map (
+            PC_WIDTH => PC_WIDTH,
+            DATA_BUS_WIDTH => DATA_BUS_WIDTH,
+            STACK_RESET_ADDR => 2 ** (DTCM_ADDR_WIDTH + 2)
+        )
         port map (
             clk_i          => clk_i,
             rst_i          => rst_i,
@@ -225,10 +229,16 @@ begin
                                instruction_w = x"00020067" else '0';
     irq_resume_pc_w <= (DATA_BUS_WIDTH-1 downto PC_WIDTH => '0') & pc_w;
 
-    -- Interrupt applications are linked at virtual text base 0x3000 while the
-    -- on-chip ITCM starts at physical PC zero. Translate the loaded vector to
-    -- the ITCM-local PC used by this core.
-    irq_vector_pc_w <= dbus_rdata_i(PC_WIDTH-1 downto 0) - C_INTERRUPT_TEXT_BASE;
+    -- Instructor firmware exists in two vector-table formats. Older images
+    -- (and interrupt test4) store linker addresses based at 0x3000, while the
+    -- updated test1-test3 images store ITCM-local addresses. Normalize only
+    -- linker-based vectors; subtracting 0x3000 unconditionally corrupts the
+    -- updated local vectors (for example KEY1=0x68 becomes 0x1068).
+    irq_vector_pc_w <=
+        std_logic_vector(unsigned(dbus_rdata_i(PC_WIDTH-1 downto 0)) -
+                         unsigned(C_INTERRUPT_TEXT_BASE))
+        when unsigned(dbus_rdata_i) >= to_unsigned(16#3000#, DATA_BUS_WIDTH)
+        else dbus_rdata_i(PC_WIDTH-1 downto 0);
 
     process (clk_i, rst_i)
     begin

@@ -31,16 +31,24 @@
 #--------------------------------------------------------------
 #		    		Mask Constants
 #--------------------------------------------------------------
+.eqv BTHOLD_BTCLR								0x24
 .eqv BTHOLD_BTSSEL3_BTCLR				0x3C 
 .eqv BTSSEL3			 							0x18
+.eqv BTOUTEN_BTSSEL3			 			0x58
+.eqv BTOUTEN										0x40
+.eqv BTINT2			 								0x02
+.eqv BTHOLD_BTCLR_BTINT2				0x26
+.eqv CAPMD1_CAPISEL3			 			0x07
+.eqv CAPMD1_CAPISEL2						0x06
 .eqv BTIE			 									0x04
+
 .eqv KEY3IE_KEY2IE_KEY1IE				0x38
 .eqv KEY3IE_KEY2IE_KEY1IE_BTIE	0x3C
 .eqv KEY1IFG_MASK			 					0xFFF7
 .eqv KEY2IFG_MASK			 					0xFFEF
 .eqv KEY3IFG_MASK			 					0xFFDF
 
+.eqv SEC_PERIOD			  		0x01312D00			# in case of SMCLK=20MHz
+.eqv FREQ_5K			  			0x00000FA0			# in case of SMCLK=20MHz
+
 .eqv reti									jalr zero,0(tp)
-
-.eqv SEC_PERIOD			  		0x002625A0			# in case of SMCLK=20MHz(the BT timer source is SMCLK/8)
-

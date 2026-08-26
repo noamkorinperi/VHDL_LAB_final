@@ -48,7 +48,7 @@ architecture structural of RV32IMscMCU is
 begin
     -- The core runs at 20 MHz and the iterative divider at the board's 50 MHz.
     -- 20 MHz meets the falling-edge DTCM timing and matches benchmark constants.
-    -- oscillator.  The CDC handshake in divider_accelerator separates domains.
+    -- The CDC handshake in divider_accelerator separates the clock domains.
     clock_pll : entity work.PLL
         port map (
             areset => not KEY(0),
@@ -70,9 +70,10 @@ begin
             MA_WIDTH         => G_MA_WIDTH,
             DATA_WORDS_NUM   => G_DATA_WORDSNUM,
             CLK_CNT_WIDTH    => 16,
-            -- Board smoke-test image for the stage-5.5 lab procedure.
-            ITCM_INIT_FILE   => "ITCM_stage5_5.hex",
-            DTCM_INIT_FILE   => "DTCM.hex"
+            -- Final board image: interrupt benchmark test4 exercises GPIO,
+            -- pushbuttons, timer/PWM, interrupt entry/return and DIV/REM.
+            ITCM_INIT_FILE   => "ITCM_stage9_interrupt_test4.hex",
+            DTCM_INIT_FILE   => "DTCM_stage9_interrupt_test4.hex"
         )
         port map (
             rst_i            => reset_w,
@@ -139,7 +140,7 @@ begin
             DATA_BUS_WIDTH  => 32,
             DTCM_ADDR_WIDTH => G_ADDRWIDTH,
             WORDS_NUM       => G_DATA_WORDSNUM,
-            INIT_FILE       => "DTCM.hex"
+            INIT_FILE       => "DTCM_stage9_interrupt_test4.hex"
         )
         port map (
             clk_i           => sysclk_w,
@@ -187,9 +188,9 @@ begin
         );
 
     LEDR(7 downto 0) <= gpio_ledr_w;
-    -- Stage-5.5 board observability: PWM is visible on LEDR8 and LEDR9
-    -- lights while any debounced pushbutton is held. Interrupt events remain
-    -- internal until the stage-6 interrupt controller consumes them.
+    -- Board observability: PWM is visible on LEDR8 and LEDR9 lights while any
+    -- debounced pushbutton is held. Interrupt events remain internal and are
+    -- consumed by the interrupt controller.
     LEDR(8) <= pwm_w;
     LEDR(9) <= button_state_w(0) or button_state_w(1) or button_state_w(2);
 end architecture;

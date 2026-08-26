@@ -14,7 +14,8 @@ USE work.const_package.all;
 ENTITY Idecode IS
 	generic(
 		PC_WIDTH 		: integer 	:= 10;
-		DATA_BUS_WIDTH	: integer 	:= 32
+		DATA_BUS_WIDTH	: integer 	:= 32;
+		STACK_RESET_ADDR : integer := 8192
 	);
 	PORT(
 		--Inputs
@@ -137,6 +138,10 @@ BEGIN
 			FOR i IN 0 TO 31 LOOP
 				RF_q(i) <= CONV_STD_LOGIC_VECTOR(0,32);
 			END LOOP;
+			-- GCC-generated benchmarks use the standard RISC-V stack pointer
+			-- without an assembly startup file. Initialize sp (x2) one byte
+			-- beyond the configured DTCM so the first decrement lands in RAM.
+			RF_q(2) <= CONV_STD_LOGIC_VECTOR(STACK_RESET_ADDR, DATA_BUS_WIDTH);
 		elsif (clk_i'event and clk_i='1') then
 			if (RegWrite_ctrl_i = '1' AND rd_w /= 0) then	-- RF(0) hard-wired of value zero
 				RF_q(CONV_INTEGER(rd_w)) <= write_data_w;
@@ -160,5 +165,4 @@ BEGIN
 	tp_o <= RF_q(4);
 
 END behavior;
-
 

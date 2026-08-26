@@ -4,6 +4,9 @@
 **/output_files/
 **/*.qws
 **/*.smsg
+**/*_pin_model_dump.txt
+/test.qpf
+/test.qsf
 
 # ModelSim/Questa generated data
 **/work/

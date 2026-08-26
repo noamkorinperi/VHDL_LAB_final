@@ -174,3 +174,5 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to HEX5[6]
 
 # SignalTap is mandatory for final validation and will be enabled when the
 # phase-10 .stp file is created.
+
+set_global_assignment -name LAST_QUARTUS_VERSION "21.1.0 Lite Edition"
