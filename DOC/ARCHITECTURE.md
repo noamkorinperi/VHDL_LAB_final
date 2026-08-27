@@ -1,6 +1,7 @@
 # RV32IMscMCU - Architecture Specification
 
-Status: Stages 4–5 integrated and automatically verified, 17.08.2026 22:09 IDT
+Status: forum-compliance RTL and automated verification complete, 27.08.2026 IDT.
+Physical DE10-Standard validation is still pending for these changes.
 
 Target: Terasic DE10-Standard, Cyclone V SX SoC `5CSXFC6D6F31C6N`.
 
@@ -23,7 +24,7 @@ flowchart LR
     BUS <--> DTCM["DTCM"]
     BUS <--> PERIPH["MMIO Peripheral Mux"]
     PERIPH <--> GPIO["LEDR / HEX / SW"]
-    PERIPH <--> PB["KEY1-KEY3 + Debounce"]
+    PERIPH <--> PB["Hardware-debounced KEY1-KEY3"]
     PERIPH <--> TIMER["Basic Timer / PWM / Capture"]
     BUS <--> INTC["Interrupt Controller"]
     CPU <--> DIV
@@ -43,8 +44,7 @@ The CPU is the only bus master.
 | Signal | Width | Direction from CPU | Meaning |
 |---|---:|---|---|
 | `dbus_addr` | 32 | output | Full byte address; low bits must never be discarded before MMIO decode |
-| `dbus_wdata` | 32 | output | Store data; byte peripherals consume bits 7:0 |
-| `dbus_rdata` | 32 | input | Selected DTCM/MMIO/interrupt return data |
+| `DATA BUS` | 32 | bidirectional | CPU write data; DTCM/MMIO read data; TYPE during INTA; non-owners drive `Z` |
 | `dbus_read` | 1 | output | Valid load transaction |
 | `dbus_write` | 1 | output | Valid store transaction |
 
@@ -57,8 +57,9 @@ Rules:
    for `HEX0/HEX1`, `HEX2/HEX3`, `HEX4/HEX5`, and `IE/IFG/TYPE`.
 5. Provided applications use `lw/sw` even for byte-resolution registers.  MMIO
    writes consume the low byte and reads return zero-extended values.
-6. Exactly one read source may drive `dbus_rdata`; unmapped reads return zero.
-7. A write may target either DTCM or one peripheral, never both.
+6. Exactly one source owns the shared DATA BUS; every non-owner drives high impedance.
+7. During `INTA`, the interrupt controller drives zero-extended `TYPE` onto DATA BUS.
+8. A write may target either DTCM or one peripheral, never both.
 
 ## Address map
 
@@ -82,7 +83,7 @@ The canonical VHDL constants are in `mcu_memory_map_pkg.vhd`.
 | `BTCTL2` | `0x201D` | low byte R/W |
 | `BTCMPR0` | `0x2020` | word R/W |
 | `BTCMPR1` | `0x2024` | word R/W |
-| `BTCAPR` | `0x2028` | word R |
+| `BTCAPR` | `0x2028` | word R/W |
 | `IE` | `0x202C` | low byte R/W |
 | `IFG` | `0x202D` | low byte R/W1C/software clear as defined per source |
 | `TYPE` | `0x202E` | low byte R |
@@ -92,12 +93,14 @@ The canonical VHDL constants are in `mcu_memory_map_pkg.vhd`.
 | Domain | Source | Purpose |
 |---|---|---|
 | `CLOCK_50` | DE10-Standard 50 MHz oscillator | Board reference clock |
-| `sysclk` | Cyclone V PLL output, 20 MHz | CPU, DTCM, GPIO, timer and interrupt controller |
-| `DIVCLK` | 50 MHz clock derived/qualified by the clock unit | Divider's 32-cycle iterative datapath |
+| `MCLK` | dedicated Cyclone V PLL instance, 20 MHz | CPU and DTCM |
+| `SMCLK` | dedicated Cyclone V PLL instance, 20 MHz | GPIO, timer and interrupt controller |
+| `DIVCLK` | dedicated Cyclone V PLL instance, 50 MHz | Divider's 32-cycle iterative datapath |
 
-The generated `PLL.vhd` targets Cyclone V and currently multiplies by two and
-divides by five for the 20 MHz `sysclk`. The divider accelerator retains the 50 MHz board
-clock and crosses to/from `sysclk` with its request/completion handshake.
+`RV32IMscMCU.vhd` instantiates three generic `PLL.vhd` wrappers. MCLK and SMCLK
+use 2/5 and DIVCLK uses 1/1. Quartus may share phase-identical MCLK/SMCLK
+physical clock resources, but the required three logical PLL instances remain
+explicit. The MCLK/DIVCLK crossing uses the request/completion toggle handshake.
 
 No fabric-generated clock may be used as a clock input.  Clock selection in the
 timer will use clock-enable pulses inside the `sysclk` domain.
@@ -108,7 +111,7 @@ timer will use clock-enable pulses inside the `sysclk` domain.
 - Internal reset is active-high.
 - Assertion may be asynchronous; deassertion must be synchronized separately
   into `sysclk` and `DIVCLK` using two flip-flops.
-- The final reset remains asserted until the Cyclone V PLL reports lock.
+- The final reset remains asserted until all three Cyclone V PLL instances report lock.
 - KEY1-KEY3 are data/interrupt inputs and never participate in system reset.
 - The current wrapper asserts reset while KEY0 is pressed or the PLL is not
   locked. Synchronized reset deassertion will be reviewed before stage-5.5
@@ -144,12 +147,12 @@ cycle 2.  `jalr zero, 0(tp)` acts as `reti` and restores GIE.
 | `RV32IMscMCU.vhd` | Structural board/MCU top-level only |
 | `RV32I_CORE.vhd` | CPU structure and later interrupt/divider stall integration |
 | `mcu_memory_map_pkg.vhd` | Canonical addresses and interrupt TYPE values |
-| `mcu_interconnect.vhd` | DTCM/MMIO select and read mux, phase 2 |
+| `mcu_interconnect.vhd` | Shared tri-state DATA BUS ownership and DTCM/MMIO selection |
 | `gpio_peripheral.vhd` | LED/HEX/SW registers and seven-segment encoding, phase 2 |
 | `divider.vhd` | Iterative unsigned core, phase 3 |
-| `PLL.vhd` | Cyclone V 50-to-20 MHz PLL and lock indication |
+| `PLL.vhd` | Generic Cyclone V PLL wrapper and lock indication |
 | `basic_timer.vhd` | Timer, compare, PWM and capture, phase 4 |
-| `pushbutton_unit.vhd` | Synchronization, debounce and event detection, phase 5 |
+| `pushbutton_unit.vhd` | Direct board-key state and release-edge event detection |
 | `interrupt_controller.vhd` | IE, IFG, TYPE and priority, phase 6 |
 
 ## Stage 4–5 implementation
@@ -160,29 +163,30 @@ read value and one `hit` response. This preserves the original CPU bus and the
 stage-0–3 simulation harness interface.
 
 The Basic Timer implements `BTCTL1`, `BTCTL2`, `BTCMPR0`, `BTCMPR1` and
-read-only `BTCAPR`. `BTCNT` is internal and is exposed only as a debug signal.
+read/write `BTCAPR`. `BTCNT` is internal and is exposed only as a debug signal.
 Clock selections `/1`, `/2`, `/4` and `/8` are clock-enable pulses in the
 `sysclk` domain. Compare 0 resets the up-counter, compare 1 changes PWM duty,
 and synchronized capture inputs can latch rising or falling edges. Timer and
 button events are one-`sysclk` pulses prepared for the stage-6 controller.
 
-The pushbutton unit treats the board keys as active-low, synchronizes each input
-with two flip-flops, debounces it for 200,000 `sysclk` cycles (10 ms at 20 MHz),
-and emits one press event per stable press. `PORT_PB[2:0]` returns active-high
-pressed states for KEY1, KEY2 and KEY3 respectively.
+The pushbutton unit treats the board keys as active-low and relies on the
+DE10-Standard's hardware Schmitt-trigger/debounce path, as clarified by the
+instructor. It adds no software debounce or two-flop key synchronizer. A single
+event is emitted on the hardware-debounced release transition (`0` to `1`).
+`PORT_PB[2:0]` returns active-high pressed states for KEY1, KEY2 and KEY3.
 
 ### Board-observation mapping prepared for stage 5.5
 
 | Board signal | Current function |
 |---|---|
 | `KEY0` | active-low system reset |
-| `KEY1`, `KEY2`, `KEY3` | debounced pushbuttons / future interrupt sources |
+| `KEY1`, `KEY2`, `KEY3` | hardware-debounced pushbuttons / interrupt sources; event on release |
 | `SW[7:0]` | GPIO switch port |
 | `SW8` | timer `CAPIN1` |
 | `SW9` | timer `CAPIN2` |
 | `LEDR[7:0]` | GPIO LED register |
 | `LEDR8` | direct PWM observation |
-| `LEDR9` | high while any debounced key is pressed |
+| `LEDR9` | high while any hardware-debounced key is pressed |
 
 Physical pin assignments and the dedicated smoke-test firmware remain gated on
 the user's ModelSim GUI evidence and belong to stage 5.5.

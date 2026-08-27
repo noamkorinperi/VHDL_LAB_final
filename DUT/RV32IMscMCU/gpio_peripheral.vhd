@@ -56,10 +56,10 @@ architecture rtl of gpio_peripheral is
     function is_gpio_address(address : std_logic_vector(31 downto 0))
         return boolean is
     begin
-        return address = C_PORT_LEDR_ADDR or address = C_PORT_HEX0_ADDR or
-               address = C_PORT_HEX1_ADDR or address = C_PORT_HEX2_ADDR or
-               address = C_PORT_HEX3_ADDR or address = C_PORT_HEX4_ADDR or
-               address = C_PORT_HEX5_ADDR or address = C_PORT_SW_ADDR;
+        return address = C_PORT_LEDR_ADDR or address = C_PORT_SW_ADDR or
+               address(31 downto 1) = C_PORT_HEX0_ADDR(31 downto 1) or
+               address(31 downto 1) = C_PORT_HEX2_ADDR(31 downto 1) or
+               address(31 downto 1) = C_PORT_HEX4_ADDR(31 downto 1);
     end function;
 begin
     process (clk_i, reset_i)
@@ -69,16 +69,18 @@ begin
             hex_q  <= (others => (others => '0'));
         elsif rising_edge(clk_i) then
             if write_i = '1' then
-                case address_i is
-                    when C_PORT_LEDR_ADDR => ledr_q   <= write_data_i(7 downto 0);
-                    when C_PORT_HEX0_ADDR => hex_q(0) <= write_data_i(7 downto 0);
-                    when C_PORT_HEX1_ADDR => hex_q(1) <= write_data_i(7 downto 0);
-                    when C_PORT_HEX2_ADDR => hex_q(2) <= write_data_i(7 downto 0);
-                    when C_PORT_HEX3_ADDR => hex_q(3) <= write_data_i(7 downto 0);
-                    when C_PORT_HEX4_ADDR => hex_q(4) <= write_data_i(7 downto 0);
-                    when C_PORT_HEX5_ADDR => hex_q(5) <= write_data_i(7 downto 0);
-                    when others => null;
-                end case;
+                if address_i = C_PORT_LEDR_ADDR then
+                    ledr_q <= write_data_i(7 downto 0);
+                elsif address_i(31 downto 1) = C_PORT_HEX0_ADDR(31 downto 1) then
+                    if address_i(0) = '0' then hex_q(0) <= write_data_i(7 downto 0);
+                    else hex_q(1) <= write_data_i(7 downto 0); end if;
+                elsif address_i(31 downto 1) = C_PORT_HEX2_ADDR(31 downto 1) then
+                    if address_i(0) = '0' then hex_q(2) <= write_data_i(7 downto 0);
+                    else hex_q(3) <= write_data_i(7 downto 0); end if;
+                elsif address_i(31 downto 1) = C_PORT_HEX4_ADDR(31 downto 1) then
+                    if address_i(0) = '0' then hex_q(4) <= write_data_i(7 downto 0);
+                    else hex_q(5) <= write_data_i(7 downto 0); end if;
+                end if;
             end if;
         end if;
     end process;
@@ -87,17 +89,20 @@ begin
     begin
         read_data_o <= (others => '0');
         if read_i = '1' then
-            case address_i is
-                when C_PORT_LEDR_ADDR => read_data_o(7 downto 0) <= ledr_q;
-                when C_PORT_HEX0_ADDR => read_data_o(7 downto 0) <= hex_q(0);
-                when C_PORT_HEX1_ADDR => read_data_o(7 downto 0) <= hex_q(1);
-                when C_PORT_HEX2_ADDR => read_data_o(7 downto 0) <= hex_q(2);
-                when C_PORT_HEX3_ADDR => read_data_o(7 downto 0) <= hex_q(3);
-                when C_PORT_HEX4_ADDR => read_data_o(7 downto 0) <= hex_q(4);
-                when C_PORT_HEX5_ADDR => read_data_o(7 downto 0) <= hex_q(5);
-                when C_PORT_SW_ADDR   => read_data_o(7 downto 0) <= switches_i;
-                when others => null;
-            end case;
+            if address_i = C_PORT_LEDR_ADDR then
+                read_data_o(7 downto 0) <= ledr_q;
+            elsif address_i = C_PORT_SW_ADDR then
+                read_data_o(7 downto 0) <= switches_i;
+            elsif address_i(31 downto 1) = C_PORT_HEX0_ADDR(31 downto 1) then
+                if address_i(0) = '0' then read_data_o(7 downto 0) <= hex_q(0);
+                else read_data_o(7 downto 0) <= hex_q(1); end if;
+            elsif address_i(31 downto 1) = C_PORT_HEX2_ADDR(31 downto 1) then
+                if address_i(0) = '0' then read_data_o(7 downto 0) <= hex_q(2);
+                else read_data_o(7 downto 0) <= hex_q(3); end if;
+            elsif address_i(31 downto 1) = C_PORT_HEX4_ADDR(31 downto 1) then
+                if address_i(0) = '0' then read_data_o(7 downto 0) <= hex_q(4);
+                else read_data_o(7 downto 0) <= hex_q(5); end if;
+            end if;
         end if;
     end process;
 

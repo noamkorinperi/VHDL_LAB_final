@@ -28,7 +28,8 @@ STAGE 6 INTERRUPT CONTROLLER PASS
 ```
 
 הבדיקה מכסה את כתובות `IE=0x202C`, ‏`IFG=0x202D`, ‏`TYPE=0x202E`, mask,
-שמירת flags, חסימת `INTR` כאשר GIE=0, ותעדוף:
+יצירת IFG רק כאשר ה־IE המתאים פעיל, ניקוי IFG כש־IE מתבטל, חסימת `INTR`
+כאשר GIE=0, ותעדוף:
 
 ```text
 Timer (0x10) > KEY1 (0x14) > KEY2 (0x18) > KEY3 (0x1C)
@@ -56,7 +57,7 @@ STAGE 7 CPU INTERRUPT INTEGRATION PASS
 הבדיקה מריצה את benchmark הפסיקות `test2` שסופק, ולא תוכנית צעצוע. ה־TB:
 
 - ממתין שהתוכנה תכתוב `IE=0x3C` ותגדיר `gp[0]=GIE=1`.
-- מפעיל KEY1, ‏KEY2 ו־KEY3 בנפרד דרך יחידת ה־debounce.
+- לוחץ ומשחרר KEY1, ‏KEY2 ו־KEY3 בנפרד; אירוע הפסיקה נוצר בשחרור.
 - מאמת `INTA`, לכידת TYPE המתאים וקפיצה דרך vector table שב־DTCM.
 - מאמת ש־GIE מתאפס בזמן כניסה לפסיקה.
 - מאמת שכל ISR כותב `state=1/2/3`, מנקה את ה־IFG שלו ומבצע `reti`.
@@ -65,6 +66,17 @@ STAGE 7 CPU INTERRUPT INTEGRATION PASS
 ב־Wave בדוק את `pc`, ‏`instruction`, ‏`intr`, ‏`inta`, ‏`gie`, ‏`irq_active`,
 `irq_type`, ‏`interrupt_ie`, ‏`interrupt_ifg`, ‏`keys_n`, ‏`bus_addr`,
 `bus_wdata`, ‏`bus_write`.
+
+## בדיקת קבלה — פסיקה שמגיעה באמצע DIV
+
+```tcl
+quit -sim
+do run_stage7_divider_interrupt_order.do
+```
+
+הבדיקה מעלה פסיקה בזמן `DIV`, מוודאת שהחלוקה מסתיימת ונכתבת חזרה לפני
+`INTA`, ואז מאמתת כניסה ל־ISR, חזרה דרך `tp` והמשך הזרימה ששומרת את המנה.
+התוצאה התקינה היא `STAGE 7 DIVIDER/INTERRUPT ORDER PASS`.
 
 ## שמירת ראיות
 

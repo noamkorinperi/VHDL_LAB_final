@@ -131,6 +131,8 @@ begin
                         btcmpr0_q <= write_data_i;
                     when C_BTCMPR1_ADDR =>
                         btcmpr1_q <= write_data_i;
+                    when C_BTCAPR_ADDR =>
+                        btcapr_q <= write_data_i;
                     when others => null;
                 end case;
             end if;

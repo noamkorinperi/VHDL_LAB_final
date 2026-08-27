@@ -8,8 +8,7 @@ use work.cond_compilation_package.all;
 entity mcu_interrupt_sim_harness is
     generic (
         ITCM_INIT_FILE : string := "ITCM.hex";
-        DTCM_INIT_FILE : string := "DTCM.hex";
-        PB_DEBOUNCE_CYCLES : positive := 2
+        DTCM_INIT_FILE : string := "DTCM.hex"
     );
     port (
         sys_clk_i : in std_logic;
@@ -34,7 +33,7 @@ entity mcu_interrupt_sim_harness is
 end entity;
 
 architecture sim of mcu_interrupt_sim_harness is
-    signal cpu_addr_w, cpu_wdata_w, cpu_rdata_w, bus_rdata_w : std_logic_vector(31 downto 0);
+    signal cpu_addr_w, cpu_wdata_w, cpu_rdata_w, data_bus_w : std_logic_vector(31 downto 0);
     signal cpu_read_w, cpu_write_w : std_logic;
     signal intr_w, inta_w, gie_w, irq_active_w : std_logic;
     signal interrupt_type_w, cpu_irq_type_w : std_logic_vector(7 downto 0);
@@ -75,17 +74,14 @@ begin
             irq_type_o => cpu_irq_type_w, mclk_cnt_o => open
         );
 
-    -- During INTA the interrupt controller owns the CPU read-data input and
-    -- presents TYPE. In the vector-fetch cycle the regular fabric reads DTCM.
-    cpu_rdata_w <= (31 downto 8 => '0') & interrupt_type_w when inta_w = '1'
-                   else bus_rdata_w;
-
     fabric : entity work.mcu_interconnect
         generic map (DTCM_ADDR_WIDTH => G_ADDRWIDTH)
         port map (
             cpu_addr_i => cpu_addr_w, cpu_wdata_i => cpu_wdata_w,
             cpu_read_i => cpu_read_w, cpu_write_i => cpu_write_w,
-            cpu_rdata_o => bus_rdata_w,
+            cpu_rdata_o => cpu_rdata_w,
+            data_bus_io => data_bus_w,
+            inta_i => inta_w, interrupt_type_i => interrupt_type_w,
             dtcm_addr_o => dtcm_addr_w, dtcm_wdata_o => dtcm_wdata_w,
             dtcm_read_o => dtcm_read_w, dtcm_write_o => dtcm_write_w,
             dtcm_rdata_i => dtcm_rdata_w,
@@ -108,7 +104,6 @@ begin
         );
 
     peripherals : entity work.mcu_peripherals
-        generic map (PB_DEBOUNCE_CYCLES => PB_DEBOUNCE_CYCLES)
         port map (
             clk_i => sys_clk_i, reset_i => reset_i,
             address_i => mmio_addr_w, write_data_i => mmio_wdata_w,

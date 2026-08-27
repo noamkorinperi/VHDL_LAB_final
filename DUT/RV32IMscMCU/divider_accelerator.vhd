@@ -52,6 +52,9 @@ architecture rtl of divider_accelerator is
     signal core_quotient_w  : std_logic_vector(31 downto 0);
     signal core_remainder_w : std_logic_vector(31 downto 0);
 
+    -- Figure 10 CDC structure: the control toggles cross through two
+    -- destination-domain flip-flops.  The held multi-bit payload is sampled
+    -- only after the synchronized toggle arrives.
     function twos_complement(value : std_logic_vector(31 downto 0))
         return std_logic_vector is
     begin

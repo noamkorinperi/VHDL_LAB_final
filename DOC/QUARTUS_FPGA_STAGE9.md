@@ -2,25 +2,30 @@
 
 עודכן: 26.08.2026
 
+> **אזהרת ענף forum-compliance (27.08.2026):** ה־RTL החדש עבר ModelSim,
+> Quartus ו־TimeQuest, אך **טרם נצרב או אומת פיזית**. תוצאות הכרטיס בהמשך
+> פרק זה הן ראיות היסטוריות של `main` בלבד ואינן מאמתות את הענף החדש.
+
 ## מצב build
 
 - Quartus Prime Lite 21.1, רכיב `5CSXFC6D6F31C6`, top-level `RV32IMscMCU`.
 - Full Compilation הסתיים בהצלחה: 0 errors.
 - Analysis & Synthesis: 0 errors; Fitter: 0 errors; Assembler: 0 errors.
 - TimeQuest לאחר תיקון ה־CDC constraints: 0 errors, 0 warnings.
-- worst setup slack: `+2.664 ns`; worst hold slack: `+0.143 ns` בכל הפינות המסוכמות.
+- forum-compliance TimeQuest: fully constrained, 0 warnings; worst setup slack
+  `+0.474 ns`, worst hold slack `+0.160 ns` בכל הפינות המסוכמות.
 - SOF סופי: `Quartus/RV32IMscMCU/output_files/RV32IMscMCU.sof`.
 
 ## ניצול משאבים
 
 | משאב | שימוש |
 |---|---:|
-| ALMs | 2,010 / 41,910 (5%) |
-| Registers | 2,033 |
+| ALMs | 2,080 / 41,910 (5%) |
+| Registers | 2,029 |
 | Pins | 67 / 499 (13%) |
 | Block memory | 131,072 bits (2%), 14 blocks |
 | DSP | 4 / 112 (4%) |
-| PLL | 1 / 15 (7%) |
+| PLL | 3 logical instances; fitter shares the two phase-identical 20 MHz instances into 1 physical PLL |
 
 כל 67 ה־I/O pins ממופים. אזהרת ה־Fitter לגבי I/O מתייחסת רק לכך שלא הוגדרו drive-strength ו־slew-rate מפורשים ל־LEDR/HEX; Quartus משתמש בברירות המחדל של `3.3-V LVTTL`. אזהרת עומק ה־DTCM צפויה: תמונת הקושחה מכילה 1024 מילים בתוך RAM של 2048 מילים, והחצי העליון מאותחל לאפס.
 
@@ -46,7 +51,7 @@ verify_timing_stage9.cmd
 
 הסקריפטים ממפים זמנית את שורש ה־workspace לכונן `V:` מפני ש־Quartus 21.1 משמיט את רכיב `Desktop` כאשר הוא מקבל את הנתיב הנוכחי ישירות. המיפוי מוסר בסיום.
 
-## תוצאות הבדיקה על הכרטיס
+## תוצאות הבדיקה ההיסטוריות על הכרטיס (`main` בלבד)
 
 ב־26.08.2026 ה־SOF נטען דרך `DE-SoC [USB-1]` אל רכיב FPGA מספר 2 בשרשרת
 ה־JTAG. האימות הפיזי עבר:

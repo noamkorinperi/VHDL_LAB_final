@@ -112,8 +112,7 @@ begin
     dut : entity work.mcu_interrupt_sim_harness
         generic map (
             ITCM_INIT_FILE => benchmark_itcm(BENCHMARK_ID),
-            DTCM_INIT_FILE => benchmark_dtcm(BENCHMARK_ID),
-            PB_DEBOUNCE_CYCLES => 2
+            DTCM_INIT_FILE => benchmark_dtcm(BENCHMARK_ID)
         )
         port map (
             sys_clk_i => sys_clk, div_clk_i => div_clk, reset_i => reset,
@@ -231,6 +230,9 @@ begin
             variable saw_state, saw_side, returned : boolean := false;
         begin
             keys_n(key_index) <= '0';
+            wait until rising_edge(sys_clk);
+            wait until rising_edge(sys_clk);
+            keys_n(key_index) <= '1';
             for cycle in 0 to 600 loop
                 wait until rising_edge(sys_clk);
                 if bus_write = '1' and bus_addr = STATE_ADDR and
@@ -244,7 +246,6 @@ begin
                 exit when saw_state;
             end loop;
             assert saw_state report "Stage 8: key ISR did not update state" severity failure;
-            keys_n(key_index) <= '1';
             for cycle in 0 to 600 loop
                 wait until rising_edge(sys_clk);
                 if check_side_write and bus_write = '1' and

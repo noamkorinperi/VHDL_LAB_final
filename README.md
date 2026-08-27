@@ -3,9 +3,18 @@
 RV32IM single-cycle MCU implemented in VHDL for the Terasic DE10-Standard
 FPGA board.
 
-Current implementation status: stages 0–9 pass the complete automated ModelSim
-regression and physical DE10-Standard validation. The final interrupt-test4 SOF
-has timing closure and passes reset, compare, PWM, DIV and REM board tests.
+## Validation status of this branch
+
+The forum-compliance changes pass the complete automated ModelSim regression,
+Quartus Full Compilation, and fully constrained TimeQuest analysis.
+
+**They have not yet been programmed onto or physically validated on a
+DE10-Standard board.** The reset, compare, PWM, DIV and REM board results
+recorded on `main` apply to the `main` image only and must not be treated as
+physical evidence for this branch.
+
+See `DOC/FORUM_COMPLIANCE_STATUS.md` for the forum-question audit, changes and
+remaining physical checks.
 
 ## Project navigation
 
@@ -20,6 +29,7 @@ has timing closure and passes reset, compare, PWM, DIV and REM board tests.
 - `DOC/MODELSIM_TESTS_STAGE6_TO_STAGE7.md` — interrupt test instructions.
 - `DOC/MODELSIM_TESTS_STAGE8.md` — full benchmark matrix, assertions and IPC.
 - `DOC/QUARTUS_FPGA_STAGE9.md` — final Quartus build and board procedure.
+- `DOC/FORUM_COMPLIANCE_STATUS.md` — forum compliance matrix and branch gate.
 - `SIM/RV32IMscMCU/run_stage8_full_verification.do` — unified stages 0–8
   system regression for all nine supplied applications.
 - `Quartus/RV32IMscMCU/compile_stage9.cmd` — reproducible full FPGA build.

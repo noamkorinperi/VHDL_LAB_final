@@ -56,8 +56,8 @@ STAGE 5 PUSHBUTTONS PASS
 יציבה, לחיצה ארוכה ללא אירועים חוזרים, שחרור ללא אירוע press, לחיצה בו־זמנית
 על שני כפתורים וקריאת `PORT_PB` ב־`0x2014`.
 
-ב־Wave יש לראות את `keys_n`, ‏`key_sync1_n_q`, ‏`key_sync2_n_q`,
-`buttons`, ‏`press_event` ומוני האירועים של שלושת הכפתורים.
+ב־Wave יש לראות את `keys_n`, ‏`keys_prev_n_q`, ‏`buttons`,
+`release_event` ומוני אירועי השחרור של שלושת הכפתורים.
 
 ## בדיקה 3 — אינטגרציית שלבים 4–5 ו־MMIO
 

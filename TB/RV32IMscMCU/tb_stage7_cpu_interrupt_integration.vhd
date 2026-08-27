@@ -32,8 +32,7 @@ begin
     dut : entity work.mcu_interrupt_sim_harness
         generic map (
             ITCM_INIT_FILE => "../../Benchmark apps/Intrrupt-based IO/test2/bin/M9K-intel/ITCM.hex",
-            DTCM_INIT_FILE => "../../Benchmark apps/Intrrupt-based IO/test2/bin/M9K-intel/DTCM.hex",
-            PB_DEBOUNCE_CYCLES => 2
+            DTCM_INIT_FILE => "../../Benchmark apps/Intrrupt-based IO/test2/bin/M9K-intel/DTCM.hex"
         )
         port map (
             sys_clk_i => sys_clk, div_clk_i => div_clk, reset_i => reset,
@@ -60,6 +59,9 @@ begin
             variable resume_pc : std_logic_vector(G_PC_WIDTH-1 downto 0) := (others => '0');
         begin
             keys_n(key_index) <= '0';
+            wait until rising_edge(sys_clk);
+            wait until rising_edge(sys_clk);
+            keys_n(key_index) <= '1';
             for cycle in 0 to 300 loop
                 wait until rising_edge(sys_clk);
                 if inta = '1' then
@@ -85,7 +87,6 @@ begin
             assert saw_irq_type report "Stage 7: CPU did not capture the expected TYPE" severity failure;
             assert saw_gie_clear report "Stage 7: GIE was not cleared during interrupt entry" severity failure;
 
-            keys_n(key_index) <= '1';
             for cycle in 0 to 100 loop
                 wait until rising_edge(sys_clk);
                 exit when gie = '1' and irq_active = '0' and

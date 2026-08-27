@@ -13,27 +13,26 @@ architecture sim of tb_stage5_pushbuttons is
     signal clk, reset, read_en, hit : std_logic := '0';
     signal address, read_data : std_logic_vector(31 downto 0) := (others => '0');
     signal keys_n : std_logic_vector(2 downto 0) := (others => '1');
-    signal buttons, press_event : std_logic_vector(2 downto 0);
+    signal buttons, release_event : std_logic_vector(2 downto 0);
     signal key1_events, key2_events, key3_events : natural := 0;
 begin
     clk <= not clk after C_CLK_PERIOD / 2;
 
     dut : entity work.pushbutton_unit
-        generic map (DEBOUNCE_CYCLES => 3)
         port map (
             clk_i => clk, reset_i => reset,
             address_i => address, read_i => read_en,
             read_data_o => read_data, hit_o => hit,
             keys_n_i => keys_n, buttons_o => buttons,
-            press_event_o => press_event
+            release_event_o => release_event
         );
 
     event_counter : process (clk)
     begin
         if rising_edge(clk) then
-            if press_event(0) = '1' then key1_events <= key1_events + 1; end if;
-            if press_event(1) = '1' then key2_events <= key2_events + 1; end if;
-            if press_event(2) = '1' then key3_events <= key3_events + 1; end if;
+            if release_event(0) = '1' then key1_events <= key1_events + 1; end if;
+            if release_event(1) = '1' then key2_events <= key2_events + 1; end if;
+            if release_event(2) = '1' then key3_events <= key3_events + 1; end if;
         end if;
     end process;
 
@@ -78,45 +77,32 @@ begin
         read_en <= '0';
         address <= (others => '0');
 
-        -- Short transitions are contact bounce and must not be reported.
+        -- The board already debounces the keys. PORT_PB follows the physical
+        -- active-low inputs, while the interrupt event occurs on release.
         keys_n(0) <= '0';
-        wait_cycles(1);
-        keys_n(0) <= '1';
-        wait_cycles(1);
-        keys_n(0) <= '0';
-        wait_cycles(1);
-        keys_n(0) <= '1';
+        wait_cycles(2);
+        check_port("001", "KEY1 press");
+        assert key1_events = 0
+            report "KEY1 press incorrectly generated a release event" severity failure;
         wait_cycles(4);
-        assert buttons(0) = '0' and key1_events = 0
-            report "KEY1 bounce produced a false press" severity failure;
+        assert key1_events = 0
+            report "Held KEY1 generated an event" severity failure;
 
-        keys_n(0) <= '0';
-        wait_cycles(7);
-        check_port("001", "Stable KEY1 press");
-        assert key1_events = 1
-            report "Stable KEY1 press did not produce exactly one event"
-            severity failure;
-
-        wait_cycles(8);
-        assert key1_events = 1
-            report "Held KEY1 repeated its press event" severity failure;
-
-        -- Release is debounced but deliberately does not create a press event.
         keys_n(0) <= '1';
-        wait_cycles(1);
-        keys_n(0) <= '0';
-        wait_cycles(1);
-        keys_n(0) <= '1';
-        wait_cycles(7);
+        wait_cycles(2);
         check_port("000", "KEY1 release");
         assert key1_events = 1
-            report "KEY1 release created a press event" severity failure;
+            report "KEY1 release did not create exactly one event" severity failure;
 
         keys_n(2 downto 1) <= "00";
-        wait_cycles(7);
+        wait_cycles(2);
         check_port("110", "Simultaneous KEY2/KEY3 press");
+        assert key2_events = 0 and key3_events = 0
+            report "KEY2/KEY3 press incorrectly generated events" severity failure;
+        keys_n(2 downto 1) <= "11";
+        wait_cycles(2);
         assert key2_events = 1 and key3_events = 1
-            report "Simultaneous key presses were not independently detected"
+            report "Simultaneous key releases were not independently detected"
             severity failure;
 
         report "STAGE 5 PUSHBUTTONS PASS" severity note;

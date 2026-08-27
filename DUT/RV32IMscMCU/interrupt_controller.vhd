@@ -58,19 +58,25 @@ begin
 
     process (clk_i, reset_i)
         variable next_ifg_v : std_logic_vector(5 downto 0);
+        variable next_ie_v  : std_logic_vector(5 downto 0);
     begin
         if reset_i = '1' then
             ie_q <= (others => '0');
             ifg_q <= (others => '0');
         elsif rising_edge(clk_i) then
+            next_ie_v := ie_q;
             if write_i = '1' and address_i = C_IE_ADDR then
-                ie_q <= write_data_i(5 downto 0);
+                next_ie_v := write_data_i(5 downto 0);
             end if;
+            ie_q <= next_ie_v;
 
-            next_ifg_v := ifg_q;
+            -- Per the instructor clarification, a visible/pending IFG exists
+            -- only while its IE bit is enabled. Disabling IE clears that IFG,
+            -- and an event arriving while IE=0 is not retained for later.
+            next_ifg_v := ifg_q and next_ie_v;
             if write_i = '1' and address_i = C_IFG_ADDR then
                 -- The supplied applications use read/AND/write clearing.
-                next_ifg_v := write_data_i(5 downto 0);
+                next_ifg_v := write_data_i(5 downto 0) and next_ie_v;
             end if;
 
             -- Synchronous sources are cleared automatically on service.
@@ -84,16 +90,16 @@ begin
             end if;
 
             -- A new event wins over a simultaneous clear so no event is lost.
-            if timer_event_i = '1' then
+            if timer_event_i = '1' and next_ie_v(C_IRQ_TIMER_BIT) = '1' then
                 next_ifg_v(C_IRQ_TIMER_BIT) := '1';
             end if;
-            if key_event_i(0) = '1' then
+            if key_event_i(0) = '1' and next_ie_v(C_IRQ_KEY1_BIT) = '1' then
                 next_ifg_v(C_IRQ_KEY1_BIT) := '1';
             end if;
-            if key_event_i(1) = '1' then
+            if key_event_i(1) = '1' and next_ie_v(C_IRQ_KEY2_BIT) = '1' then
                 next_ifg_v(C_IRQ_KEY2_BIT) := '1';
             end if;
-            if key_event_i(2) = '1' then
+            if key_event_i(2) = '1' and next_ie_v(C_IRQ_KEY3_BIT) = '1' then
                 next_ifg_v(C_IRQ_KEY3_BIT) := '1';
             end if;
             ifg_q <= next_ifg_v;

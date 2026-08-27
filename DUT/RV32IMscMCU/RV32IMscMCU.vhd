@@ -19,9 +19,10 @@ entity RV32IMscMCU is
 end entity;
 
 architecture structural of RV32IMscMCU is
-    signal sysclk_w, pll_locked_w, reset_w : std_logic;
+    signal mclk_w, smclk_w, divclk_w : std_logic;
+    signal mclk_locked_w, smclk_locked_w, divclk_locked_w, reset_w : std_logic;
 
-    signal cpu_addr_w, cpu_wdata_w, cpu_rdata_w, bus_rdata_w : std_logic_vector(31 downto 0);
+    signal cpu_addr_w, cpu_wdata_w, cpu_rdata_w, data_bus_w : std_logic_vector(31 downto 0);
     signal cpu_read_w, cpu_write_w : std_logic;
     signal intr_w, inta_w, gie_w, irq_active_w : std_logic;
     signal interrupt_type_w, interrupt_ie_w, interrupt_ifg_w : std_logic_vector(7 downto 0);
@@ -46,18 +47,37 @@ architecture structural of RV32IMscMCU is
     attribute keep of intr_w, inta_w, gie_w, irq_active_w : signal is true;
     attribute keep of interrupt_type_w, interrupt_ie_w, interrupt_ifg_w : signal is true;
 begin
-    -- The core runs at 20 MHz and the iterative divider at the board's 50 MHz.
-    -- 20 MHz meets the falling-edge DTCM timing and matches benchmark constants.
-    -- The CDC handshake in divider_accelerator separates the clock domains.
-    clock_pll : entity work.PLL
+    -- Three separate PLL instances are required by the project clock tree.
+    -- MCLK and SMCLK have an integer 1:1 ratio; DIVCLK runs below divider fmax.
+    mclk_pll : entity work.PLL
+        generic map (MULTIPLY_BY => 2, DIVIDE_BY => 5)
         port map (
             areset => not KEY(0),
             inclk0 => CLOCK_50,
-            c0     => sysclk_w,
-            locked => pll_locked_w
+            c0     => mclk_w,
+            locked => mclk_locked_w
         );
 
-    reset_w <= (not KEY(0)) or (not pll_locked_w);
+    smclk_pll : entity work.PLL
+        generic map (MULTIPLY_BY => 2, DIVIDE_BY => 5)
+        port map (
+            areset => not KEY(0),
+            inclk0 => CLOCK_50,
+            c0     => smclk_w,
+            locked => smclk_locked_w
+        );
+
+    divclk_pll : entity work.PLL
+        generic map (MULTIPLY_BY => 1, DIVIDE_BY => 1)
+        port map (
+            areset => not KEY(0),
+            inclk0 => CLOCK_50,
+            c0     => divclk_w,
+            locked => divclk_locked_w
+        );
+
+    reset_w <= (not KEY(0)) or (not mclk_locked_w) or
+               (not smclk_locked_w) or (not divclk_locked_w);
 
     cpu : entity work.RV32I_CORE
         generic map (
@@ -77,8 +97,8 @@ begin
         )
         port map (
             rst_i            => reset_w,
-            clk_i            => sysclk_w,
-            divclk_i         => CLOCK_50,
+            clk_i            => mclk_w,
+            divclk_i         => divclk_w,
             intr_i           => intr_w,
             dbus_rdata_i     => cpu_rdata_w,
             dbus_addr_o      => cpu_addr_w,
@@ -108,11 +128,6 @@ begin
             mclk_cnt_o       => open
         );
 
-    -- During INTA the controller places TYPE directly on the CPU data bus;
-    -- no address-bus transaction is used in the capture cycle.
-    cpu_rdata_w <= (31 downto 8 => '0') & interrupt_type_w when inta_w = '1'
-                   else bus_rdata_w;
-
     bus_fabric : entity work.mcu_interconnect
         generic map (DTCM_ADDR_WIDTH => G_ADDRWIDTH)
         port map (
@@ -120,7 +135,10 @@ begin
             cpu_wdata_i  => cpu_wdata_w,
             cpu_read_i   => cpu_read_w,
             cpu_write_i  => cpu_write_w,
-            cpu_rdata_o  => bus_rdata_w,
+            cpu_rdata_o  => cpu_rdata_w,
+            data_bus_io  => data_bus_w,
+            inta_i       => inta_w,
+            interrupt_type_i => interrupt_type_w,
             dtcm_addr_o  => dtcm_addr_w,
             dtcm_wdata_o => dtcm_wdata_w,
             dtcm_read_o  => dtcm_read_w,
@@ -143,7 +161,7 @@ begin
             INIT_FILE       => "DTCM_stage9_interrupt_test4.hex"
         )
         port map (
-            clk_i           => sysclk_w,
+            clk_i           => mclk_w,
             rst_i           => reset_w,
             dtcm_addr_i     => dtcm_addr_w,
             dtcm_data_wr_i  => dtcm_wdata_w,
@@ -154,7 +172,7 @@ begin
 
     peripherals : entity work.mcu_peripherals
         port map (
-            clk_i        => sysclk_w,
+            clk_i        => smclk_w,
             reset_i      => reset_w,
             address_i    => mmio_addr_w,
             write_data_i => mmio_wdata_w,
@@ -189,7 +207,7 @@ begin
 
     LEDR(7 downto 0) <= gpio_ledr_w;
     -- Board observability: PWM is visible on LEDR8 and LEDR9 lights while any
-    -- debounced pushbutton is held. Interrupt events remain internal and are
+    -- hardware-debounced pushbutton is held. Interrupt events remain internal and are
     -- consumed by the interrupt controller.
     LEDR(8) <= pwm_w;
     LEDR(9) <= button_state_w(0) or button_state_w(1) or button_state_w(2);

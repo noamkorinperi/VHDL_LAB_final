@@ -8,6 +8,7 @@ set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
 set_global_assignment -name VHDL_INPUT_VERSION VHDL_2008
 set_global_assignment -name PROJECT_IP_REGENERATION_POLICY NEVER_REGENERATE_IP
+set_global_assignment -name AUTO_MERGE_PLLS OFF
 
 set_global_assignment -name VHDL_FILE ../../DUT/RV32IMscMCU/cond_compilation_package.vhd
 set_global_assignment -name VHDL_FILE ../../DUT/RV32IMscMCU/const_package.vhd

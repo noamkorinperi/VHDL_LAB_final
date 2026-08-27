@@ -92,6 +92,11 @@ begin
         assert ie_value = x"00" and ifg_value = x"00" and intr = '0'
             report "Interrupt controller reset mismatch" severity failure;
 
+        -- An event with IE=0 must not be latched for later service.
+        pulse_sources('0', "100");
+        assert ifg_value = x"00" and intr = '0'
+            report "Disabled KEY3 event was retained in IFG" severity failure;
+
         bus_write(C_IE_ADDR, x"000000FC");
         check_read(C_IE_ADDR, x"0000003C", "IE reserved bits");
         assert intr = '0' report "IE alone asserted INTR" severity failure;
@@ -123,10 +128,10 @@ begin
         assert ifg_value = x"20" and irq_type = C_IRQ_TYPE_KEY3
             report "Software IFG clear or KEY3 selection failed" severity failure;
 
-        -- Masked pending flags stay latched but cannot raise INTR.
+        -- Disabling an IE bit clears its corresponding pending IFG.
         bus_write(C_IE_ADDR, x"00000004");
-        assert intr = '0' and ifg_value = x"20"
-            report "IE mask did not suppress pending KEY3" severity failure;
+        assert intr = '0' and ifg_value = x"00"
+            report "IE clear did not clear pending KEY3 IFG" severity failure;
 
         -- Timer event coincident with its acknowledge must not be lost.
         bus_write(C_IFG_ADDR, x"00000004");

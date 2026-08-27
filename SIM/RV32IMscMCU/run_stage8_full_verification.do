@@ -60,5 +60,11 @@ foreach {benchmark_id benchmark_name} $suite {
     quit -sim
 }
 
+echo "Running stage-8 acceptance: interrupt pending during DIV"
+vcom -2008 ../../TB/RV32IMscMCU/tb_stage7_divider_interrupt_order.vhd
+vsim -t 1ps -L altera_mf work.tb_stage7_divider_interrupt_order
+run -all
+quit -sim
+
 echo "STAGE 8 FULL VERIFICATION PASS"
 transcript file ""

@@ -31,8 +31,7 @@ begin
     dut : entity work.mcu_interrupt_sim_harness
         generic map (
             ITCM_INIT_FILE => "../../Quartus/RV32IMscMCU/ITCM_stage5_5.hex",
-            DTCM_INIT_FILE => "../../Quartus/RV32IMscMCU/DTCM.hex",
-            PB_DEBOUNCE_CYCLES => 2
+            DTCM_INIT_FILE => "../../Quartus/RV32IMscMCU/DTCM.hex"
         )
         port map (
             sys_clk_i => sys_clk, div_clk_i => div_clk, reset_i => reset,

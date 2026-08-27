@@ -4,9 +4,6 @@ use ieee.std_logic_1164.all;
 -- Structural MMIO peripheral block. The interrupt event outputs are exposed
 -- now so stage 6 can connect them without changing the timer/button interfaces.
 entity mcu_peripherals is
-    generic (
-        PB_DEBOUNCE_CYCLES : positive := 200000
-    );
     port (
         clk_i        : in  std_logic;
         reset_i      : in  std_logic;
@@ -95,9 +92,6 @@ begin
         );
 
     pushbuttons : entity work.pushbutton_unit
-        generic map (
-            DEBOUNCE_CYCLES => PB_DEBOUNCE_CYCLES
-        )
         port map (
             clk_i => clk_i,
             reset_i => reset_i,
@@ -107,7 +101,7 @@ begin
             hit_o => button_hit_w,
             keys_n_i => keys_n_i,
             buttons_o => button_state_o,
-            press_event_o => key_event_w
+            release_event_o => key_event_w
         );
 
     interrupts : entity work.interrupt_controller

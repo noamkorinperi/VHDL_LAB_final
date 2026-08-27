@@ -129,6 +129,18 @@ begin
         read_en <= '0';
         address <= (others => '0');
 
+        check_read(C_BTCTL1_ADDR, x"00000000", "BTCTL1 reset");
+        check_read(C_BTCTL2_ADDR, x"00000000", "BTCTL2 reset");
+        check_read(C_BTCMPR0_ADDR, x"00000000", "BTCMPR0 reset");
+        check_read(C_BTCMPR1_ADDR, x"00000000", "BTCMPR1 reset");
+        check_read(C_BTCAPR_ADDR, x"00000000", "BTCAPR reset");
+
+        -- All interface registers are R/W. BTCTL2[7:4] alone is protected.
+        bus_write(C_BTCTL2_ADDR, x"000000F9");
+        check_read(C_BTCTL2_ADDR, x"00000009", "BTCTL2 protected bits");
+        bus_write(C_BTCAPR_ADDR, x"A5A55A5A");
+        check_read(C_BTCAPR_ADDR, x"A5A55A5A", "BTCAPR write/read");
+
         bus_write(C_BTCMPR0_ADDR, x"FFFFFFFF");
         bus_write(C_BTCMPR1_ADDR, x"12345678");
         check_read(C_BTCMPR0_ADDR, x"FFFFFFFF", "BTCMPR0");

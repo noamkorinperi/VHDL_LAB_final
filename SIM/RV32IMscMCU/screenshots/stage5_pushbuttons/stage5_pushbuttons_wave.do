@@ -4,13 +4,12 @@ add wave -noupdate /tb_stage5_pushbuttons/clk
 add wave -noupdate /tb_stage5_pushbuttons/reset
 add wave -noupdate /tb_stage5_pushbuttons/keys_n
 add wave -noupdate /tb_stage5_pushbuttons/buttons
-add wave -noupdate /tb_stage5_pushbuttons/press_event
+add wave -noupdate /tb_stage5_pushbuttons/release_event
 add wave -noupdate -radix hexadecimal /tb_stage5_pushbuttons/address
 add wave -noupdate -radix hexadecimal /tb_stage5_pushbuttons/read_data
 add wave -noupdate /tb_stage5_pushbuttons/read_en
 add wave -noupdate /tb_stage5_pushbuttons/hit
-add wave -noupdate /tb_stage5_pushbuttons/dut/key_sync1_n_q
-add wave -noupdate /tb_stage5_pushbuttons/dut/key_sync2_n_q
+add wave -noupdate /tb_stage5_pushbuttons/dut/keys_prev_n_q
 add wave -noupdate -radix unsigned /tb_stage5_pushbuttons/key1_events
 add wave -noupdate -radix unsigned /tb_stage5_pushbuttons/key2_events
 add wave -noupdate -radix unsigned /tb_stage5_pushbuttons/key3_events

@@ -22,7 +22,6 @@ begin
     clk <= not clk after C_CLK_PERIOD / 2;
 
     dut : entity work.mcu_peripherals
-        generic map (PB_DEBOUNCE_CYCLES => 2)
         port map (
             clk_i => clk, reset_i => reset,
             address_i => address, write_data_i => write_data,
@@ -112,12 +111,20 @@ begin
         assert timer_event = '1'
             report "Integrated timer event never asserted" severity failure;
 
-        -- Debounced key state and one-cycle press event reach the wrapper ports.
+        -- Board-debounced key state is sampled directly; the interrupt event
+        -- is emitted on the physical release transition.
         keys_n(1) <= '0';
-        wait_cycles(6);
+        wait_cycles(2);
         assert button_state = "010"
             report "Integrated pushbutton state mismatch" severity failure;
         check_read(C_PORT_PB_ADDR, x"00000002", "PORT_PB");
+        assert key_event = "000"
+            report "Integrated pushbutton generated an event on press" severity failure;
+        keys_n(1) <= '1';
+        wait until rising_edge(clk);
+        wait for 1 ns;
+        assert key_event = "010"
+            report "Integrated pushbutton release event missing" severity failure;
 
         address <= x"00002030";
         read_en <= '1';
