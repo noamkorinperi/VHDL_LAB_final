@@ -3,6 +3,13 @@
 RV32IM single-cycle MCU implemented in VHDL for the Terasic DE10-Standard
 FPGA board.
 
+> ## ⚠️ לשותף לפרויקט: לפני אימות על הכרטיס
+>
+> יש לעבוד לפי
+> **[חשוב — הוראות אימות פיזי על הכרטיס](חשוב_הוראות_אימות_פיזי_על_הכרטיס.md)**.
+> השינויים בענף זה עדיין לא אומתו פיזית ואין להסתמך על תוצאות הכרטיס של
+> `main`.
+
 ## Validation status of this branch
 
 The forum-compliance changes pass the complete automated ModelSim regression,
@@ -14,7 +21,7 @@ recorded on `main` apply to the `main` image only and must not be treated as
 physical evidence for this branch.
 
 See `DOC/FORUM_COMPLIANCE_STATUS.md` for the forum-question audit and
-`DOC/PHYSICAL_VALIDATION_FORUM_BRANCH.md` for the exact DE10-Standard physical
+`חשוב_הוראות_אימות_פיזי_על_הכרטיס.md` for the exact DE10-Standard physical
 validation procedure and evidence gate.
 
 ## Project navigation
@@ -27,7 +34,7 @@ validation procedure and evidence gate.
 - `DOC/MODELSIM_TESTS_STAGE0_TO_STAGE3.md` — test instructions.
 - `DOC/MODELSIM_TESTS_STAGE4_TO_STAGE5.md` — current GUI test instructions.
 - `DOC/PHYSICAL_LAB_TEST_STAGE5_5.md` — historical stage-5.5 smoke procedure.
-- `DOC/PHYSICAL_VALIDATION_FORUM_BRANCH.md` — current branch physical
+- `חשוב_הוראות_אימות_פיזי_על_הכרטיס.md` — current branch physical
   validation procedure and evidence template.
 - `DOC/MODELSIM_TESTS_STAGE6_TO_STAGE7.md` — interrupt test instructions.
 - `DOC/MODELSIM_TESTS_STAGE8.md` — full benchmark matrix, assertions and IPC.
