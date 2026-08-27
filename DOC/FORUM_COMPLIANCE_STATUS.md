@@ -36,6 +36,9 @@
 
 ## אימות פיזי שנותר
 
+נוהל הבדיקה המלא, כולל build, צריבה, תוצאות צפויות ותבנית ראיות, נמצא
+ב־[`PHYSICAL_VALIDATION_FORUM_BRANCH.md`](PHYSICAL_VALIDATION_FORUM_BRANCH.md).
+
 יש לצרוב את ה־SOF שנבנה מהענף ולחזור על ארבעת תרחישי המעבדה:
 
 1. KEY0/reset ואתחול HEX/מצב.

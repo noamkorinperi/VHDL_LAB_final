@@ -5,6 +5,7 @@
 > **אזהרת ענף forum-compliance (27.08.2026):** ה־RTL החדש עבר ModelSim,
 > Quartus ו־TimeQuest, אך **טרם נצרב או אומת פיזית**. תוצאות הכרטיס בהמשך
 > פרק זה הן ראיות היסטוריות של `main` בלבד ואינן מאמתות את הענף החדש.
+> נוהל הקבלה לענף החדש נמצא ב־`DOC/PHYSICAL_VALIDATION_FORUM_BRANCH.md`.
 
 ## מצב build
 

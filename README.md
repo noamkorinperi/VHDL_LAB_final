@@ -13,8 +13,9 @@ DE10-Standard board.** The reset, compare, PWM, DIV and REM board results
 recorded on `main` apply to the `main` image only and must not be treated as
 physical evidence for this branch.
 
-See `DOC/FORUM_COMPLIANCE_STATUS.md` for the forum-question audit, changes and
-remaining physical checks.
+See `DOC/FORUM_COMPLIANCE_STATUS.md` for the forum-question audit and
+`DOC/PHYSICAL_VALIDATION_FORUM_BRANCH.md` for the exact DE10-Standard physical
+validation procedure and evidence gate.
 
 ## Project navigation
 
@@ -25,7 +26,9 @@ remaining physical checks.
 - `Quartus/RV32IMscMCU` — Quartus project for Cyclone V.
 - `DOC/MODELSIM_TESTS_STAGE0_TO_STAGE3.md` — test instructions.
 - `DOC/MODELSIM_TESTS_STAGE4_TO_STAGE5.md` — current GUI test instructions.
-- `DOC/PHYSICAL_LAB_TEST_STAGE5_5.md` — DE10-Standard button/PWM procedure.
+- `DOC/PHYSICAL_LAB_TEST_STAGE5_5.md` — historical stage-5.5 smoke procedure.
+- `DOC/PHYSICAL_VALIDATION_FORUM_BRANCH.md` — current branch physical
+  validation procedure and evidence template.
 - `DOC/MODELSIM_TESTS_STAGE6_TO_STAGE7.md` — interrupt test instructions.
 - `DOC/MODELSIM_TESTS_STAGE8.md` — full benchmark matrix, assertions and IPC.
 - `DOC/QUARTUS_FPGA_STAGE9.md` — final Quartus build and board procedure.
