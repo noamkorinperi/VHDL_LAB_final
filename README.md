@@ -50,3 +50,7 @@ validation procedure and evidence gate.
 
 Generated Quartus and ModelSim artifacts are intentionally excluded through
 `.gitignore`.
+
+## Final Quartus build
+
+The final timing-qualified FPGA implementation was compiled with Quartus Prime 21.1 using Fitter Seed = 2. The setting is stored in Quartus/RV32IMscMCU/RV32IMscMCU.qsf.

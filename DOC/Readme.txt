@@ -30,3 +30,8 @@ Reference-only folders
 Benchmark apps
 
 Do not edit files in the reference-only folders.
+
+Final Quartus build
+-------------------
+The final timing-qualified FPGA implementation was compiled with Quartus Prime 21.1 using Fitter Seed = 2.
+The setting is stored in Quartus/RV32IMscMCU/RV32IMscMCU.qsf.
