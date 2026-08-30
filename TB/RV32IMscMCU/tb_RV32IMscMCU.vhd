@@ -353,7 +353,7 @@ begin
             when 8 =>
                 reset_dut;
                 wait_for_interrupt_ready(x"38");
-                press_and_expect_state(0, x"00000001", true, C_BTCMPR0_ADDR, x"01312D04");
+                press_and_expect_state(0, x"00000001", true, C_BTCMPR0_ADDR, x"01312D00");
                 -- Reproduce the physical KEY1 -> KEY2 sequence.  Waiting past
                 -- the new PWM top value proves that KEY2 clears the old,
                 -- much larger compare-mode counter before PWM starts.
@@ -379,7 +379,7 @@ begin
                 -- Physical stage-9 recovery check: after both capture-mode
                 -- workloads, KEY1 must still be serviced and re-enter timer
                 -- compare mode instead of leaving the CPU/IRQ path stuck.
-                press_and_expect_state(0, x"00000001", true, C_BTCTL1_ADDR, x"01312D04");
+                press_and_expect_state(0, x"00000001", true, C_BTCMPR0_ADDR, x"01312D00");
 
                 -- Also match the board test from a clean reset, without first
                 -- putting the timer through compare and PWM modes.
@@ -391,7 +391,7 @@ begin
                 press_and_expect_state(2, x"00000003", true, C_BTCTL2_ADDR, x"00000007");
                 wait_for_write(x"00000074", x"00000007", 4000, "interrupt/test4 clean DIV array");
                 wait_for_nonzero_write(x"000000C4", 1000, "interrupt/test4 clean DIV runtime capture");
-                press_and_expect_state(0, x"00000001", true, C_BTCTL1_ADDR, x"01312D04");
+                press_and_expect_state(0, x"00000001", true, C_BTCMPR0_ADDR, x"01312D00");
 
             when others =>
                 assert false report "Stage 8: unreachable benchmark selection" severity failure;

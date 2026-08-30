@@ -144,7 +144,7 @@ begin
                     pwm_q <= write_data_i(7);
                 end if;
             elsif btctl1_q(5) = '0' and timer_tick_w = '1' then
-                compare0_v := std_logic_vector(btcnt_q) = btcmpr0_q;
+                compare0_v := btcnt_q >= unsigned(btcmpr0_q);
                 compare1_v := std_logic_vector(btcnt_q) = btcmpr1_q;
 
                 if compare0_v then
